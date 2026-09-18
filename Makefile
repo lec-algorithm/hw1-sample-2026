@@ -1,8 +1,8 @@
 # 빌드와 테스트를 한 단어로 돌리기 위한 Makefile.
 # 컨테이너 안에서 실행한다 (docker compose exec lab bash).
 #
-#   make run     예제 실행 (C, Python)
-#   make test    유닛 테스트 (C, Python)
+#   make run     예제 실행
+#   make test    유닛 테스트
 #   make debug   디버그 심볼을 넣어 빌드 (VS Code의 F5가 쓴다)
 #   make clean   빌드 산출물 정리
 #
@@ -14,25 +14,19 @@ CFLAGS ?= -std=c17 -Wall -Wextra -O2
 # `-I`는 아래 패턴 규칙이 대상 파일의 폴더로 붙인다. 여기서 고정하지 않는다.
 DEBUGFLAGS ?= -std=c17 -Wall -Wextra -g -O0
 
-.PHONY: all run run-c run-py test test-c test-py debug clean
+.PHONY: all run run-c test test-c debug clean
 
 all: test
 
-run: run-c run-py
+run: run-c
 
 run-c: src/main.out
 	@./src/main.out
 
-run-py:
-	@python3 src/main.py
-
-test: test-c test-py
+test: test-c
 
 test-c: tests/test_sort.out
 	@./tests/test_sort.out
-
-test-py:
-	@python3 -m unittest discover -s tests -v
 
 debug: src/main.debug.out
 
@@ -52,4 +46,3 @@ tests/test_sort.out: tests/test_sort.c src/sort.c src/sort.h src/bench.c src/ben
 
 clean:
 	rm -f src/*.out tests/*.out
-	rm -rf src/__pycache__ tests/__pycache__

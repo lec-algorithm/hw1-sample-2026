@@ -66,11 +66,15 @@ make run
 - 결과
 
 ```console
-sorted: 1 2 3 4 5 6 7 8 9 10
-sorted: 1 2 3 4 5 6 7 8 9 10
+=== 정렬 비교: 삽입 · 버블 · 블록 ===
+...
+[n = 8000]
+알고리즘        시간(ms)         비교         이동   메모리 재귀깊이  정렬 안정성
+---------------------------------------------------------------------------------
+insertionSort     25.393     15966683     15966691      8 B        1   yes    yes
+bubbleSort       106.473     31982470     47852121      8 B        1   yes    yes
+blockSort          1.630       289630       879919      8 B       17   yes    yes
 ```
-
-C와 Python 두 구현이 같은 결과를 냅니다.
 
 ## 테스트
 
@@ -83,18 +87,10 @@ make test
 - 결과
 
 ```console
-ok    섞인 배열
-ok    이미 정렬된 배열
-ok    역순 배열
-ok    중복이 있는 배열
-ok    원소 하나
-ok    빈 배열
-
-6 checks, 0 failures
+ok    insertionSort  섞인 배열
+ok    insertionSort  이미 정렬된 배열
 ...
-Ran 7 tests in 0.001s
-
-OK
+42 checks, 0 failures
 ```
 
 테스트가 하나라도 실패하면 `make`가 0이 아닌 코드로 끝납니다. 과제를 내기
@@ -102,10 +98,8 @@ OK
 
 | 명령 | 하는 일 |
 | --- | --- |
-| `make run` | 예제 실행 (C · Python) |
-| `make test` | 유닛 테스트 (C · Python) |
-| `make run-c` · `make run-py` | 한쪽만 실행 |
-| `make test-c` · `make test-py` | 한쪽만 테스트 |
+| `make run` | 예제 실행 |
+| `make test` | 유닛 테스트 |
 | `make debug` | 디버그 심볼을 넣어 빌드 |
 | `make clean` | 빌드 산출물 정리 |
 
@@ -119,7 +113,6 @@ Codespaces나 Dev Containers로 열었다면 편집기에서 바로 됩니다.
 | 전체 실행 | `Cmd/Ctrl + Shift + B` (기본 빌드 작업이 `make run`) |
 | 테스트 | 명령 팔레트 → **Tasks: Run Test Task** |
 | C 디버그 | `F5` → **C 디버그 (현재 파일)** |
-| Python 디버그 | `F5` → **Python 디버그 (현재 파일)** |
 
 `F5`를 누르면 빌드가 먼저 돌아 심볼이 있는 바이너리를 만들고 디버거가
 붙습니다. 중단점을 걸고 변수를 들여다볼 수 있습니다.
@@ -170,25 +163,20 @@ algorithm-env/
 ├── .vscode/                         # 빌드·디버그 설정 (F5, Cmd+Shift+B)
 ├── Makefile                         # run · test · debug · clean
 ├── src/
-│   ├── sort.h · sort.c              # C 구현
-│   ├── main.c                       # C 실행 예제
-│   ├── sort.py                      # Python 구현
-│   └── main.py                      # Python 실행 예제
+│   ├── sort.h · sort.c              # 공통 인터페이스와 정렬 구현
+│   ├── bench.h · bench.c            # 시간 · 메모리 · 안정성 측정
+│   └── main.c                       # 비교 결과 출력
 └── tests/
-    ├── test_sort.c                  # C 유닛 테스트 (표준 C만 사용)
-    └── test_sort.py                 # Python 유닛 테스트 (unittest)
+    └── test_sort.c                  # 유닛 테스트 (표준 C만 사용)
 ```
 
 ## 규약
 
 - **실행 파일은 `*.out`으로 만듭니다.** `.gitignore`가 `*.out`만 걸러내므로,
   컨테이너에서 컴파일한 Linux 바이너리가 커밋에 섞이지 않습니다.
-- **외부 라이브러리를 쓰지 않습니다.** C는 표준 라이브러리만, Python은 표준
-  모듈만 씁니다. C 테스트도 프레임워크 없이 `assert` 수준으로 직접 씁니다.
-- **C와 Python은 같은 알고리즘을 같은 이름의 함수로 구현합니다.** 언어 차이가
-  알고리즘 차이로 보이지 않게 합니다.
-- 파일명은 각 언어의 관례를 따릅니다. C는 camelCase(`bubbleSort`), Python은
-  snake_case(`bubble_sort`)입니다.
+- **외부 라이브러리를 쓰지 않습니다.** 표준 라이브러리만 씁니다. 테스트도
+  프레임워크 없이 `assert` 수준으로 직접 씁니다.
+- 함수 이름은 camelCase(`bubbleSort`)를 씁니다.
 
 ## 자기 코드로 바꾸기
 
