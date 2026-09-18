@@ -218,11 +218,17 @@ code, kbd {
     한 번에 다 하려 들지 않고, <b>원소 하나의 자리를 확정하고 문제를 둘로 쪼갠다.</b></p>
   <ol>
     <li><code>L</code>의 마지막이 <code>R</code>의 첫 원소 이하면 이어 붙이면 끝이다. 할 일 없음.</li>
-    <li>아니면 <b>긴 쪽의 한가운데</b> 원소를 고른다.</li>
+    <li>아니면 <b>짧지 않은 쪽의 한가운데</b> 원소를 고른다. 늘 긴 쪽을 반으로
+      자르므로 재귀 깊이가 <code>O(log n)</code>으로 묶인다.</li>
     <li>반대쪽에서 그 원소가 들어갈 자리를 <b>이분 탐색</b>으로 찾는다.</li>
     <li>사이 구간을 <b>회전</b>시킨다. 고른 원소의 자리가 확정된다.</li>
     <li>왼쪽에 남은 짝과 오른쪽에 남은 짝을 같은 방법으로 다시 합친다.</li>
   </ol>
+  <p><b>길이가 같으면 왼쪽을 고른다.</b> 조건이 <code>&gt;</code>가 아니라
+    <code>&gt;=</code>인 것이 중요하다. 같을 때 오른쪽으로 보내면, 두 런이 모두 길이
+    1인 경우 고를 자리가 <code>mid</code> 그 자체가 되어 <b>회전할 구간이 비고</b>,
+    같은 인자로 다시 불려 <b>무한 재귀</b>가 된다. 블록 둘을 병합할 때는 길이가 같은
+    쪽이 오히려 기본이라, 이 한 글자가 늘 일하고 있다.</p>
   <p style="margin-bottom:0">한가운데를 어느 쪽에서 골랐느냐에 따라 이분 탐색의 종류가 갈린다.
     왼쪽에서 골랐으면 <code>lowerBound</code>(그 값 <b>이상</b>이 처음 나오는 자리),
     오른쪽에서 골랐으면 <code>upperBound</code>(그 값 <b>초과</b>가 처음 나오는 자리)다.
@@ -385,21 +391,27 @@ function buildSteps(values, block) {
       return;
     }
 
+    /* 짧지 않은 쪽의 한가운데를 고른다. 길이가 같으면 왼쪽이다 — 조건이
+       '>' 가 아니라 '>=' 인 이유는 아래 설명에 적어 두었다. */
+    const lenL = mid - lo, lenR = hi - mid;
     let i, j, why;
-    if (mid - lo >= hi - mid) {
-      i = lo + ((mid - lo) >> 1);
+    if (lenL >= lenR) {
+      i = lo + (lenL >> 1);
       const x = a[i];
       j = lowerBound(mid, hi, i);
-      why = `왼쪽이 더 기니 왼쪽 한가운데 <b>${x}</b>(자리 ${i})를 골랐다. ` +
-            `오른쪽에서 ${x} <b>이상</b>이 처음 나오는 자리를 이분 탐색해 ${j}를 찾았다 ` +
-            "(<code>lowerBound</code>).";
+      const head = lenL === lenR
+        ? `두 런의 길이가 ${lenL}로 <b>같다</b>. 같을 때는 왼쪽을 고른다. `
+        : `왼쪽(${lenL})이 오른쪽(${lenR})보다 길다. `;
+      why = head +
+            `왼쪽 한가운데 <b>${x}</b>(자리 ${i})를 골라, 오른쪽에서 ${x} <b>이상</b>이 ` +
+            `처음 나오는 자리를 이분 탐색해 ${j}를 찾았다 (<code>lowerBound</code>).`;
     } else {
-      j = mid + ((hi - mid) >> 1);
+      j = mid + (lenR >> 1);
       const y = a[j];
       i = upperBound(lo, mid, j);
-      why = `오른쪽이 더 기니 오른쪽 한가운데 <b>${y}</b>(자리 ${j})를 골랐다. ` +
-            `왼쪽에서 ${y} <b>초과</b>가 처음 나오는 자리를 이분 탐색해 ${i}를 찾았다 ` +
-            "(<code>upperBound</code>).";
+      why = `오른쪽(${lenR})이 왼쪽(${lenL})보다 길다. ` +
+            `오른쪽 한가운데 <b>${y}</b>(자리 ${j})를 골라, 왼쪽에서 ${y} <b>초과</b>가 ` +
+            `처음 나오는 자리를 이분 탐색해 ${i}를 찾았다 (<code>upperBound</code>).`;
     }
     push({ phase: 2, title: "맞바꿀 두 덩어리", pivot: i, target: j,
            rotate: { lo: i, mid, hi: j },

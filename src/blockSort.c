@@ -11,6 +11,8 @@
  */
 #include "sort.h"
 
+#include <assert.h>
+
 #include "sortctx.h"
 
 /* 블록 크기 — n과 무관한 상수다.
@@ -96,12 +98,20 @@ static void mergeInPlace(SortCtx *c, size_t lo, size_t mid, size_t hi, size_t de
     }
 
     size_t i, j;
+    /* 짧지 않은 쪽의 한가운데를 골라 반대쪽에 끼워 넣는다. 늘 긴 쪽을 반으로
+     * 자르므로 재귀 깊이가 O(log n)으로 묶인다.
+     *
+     * '>' 가 아니라 '>=' 인 것이 중요하다. 길이가 같을 때 오른쪽으로 보내면,
+     * 두 런이 모두 길이 1인 경우 j = mid + 0 = mid 가 되어 회전할 구간이
+     * 비고, 같은 인자로 다시 불려 무한 재귀가 된다. 왼쪽으로 보내면 앞의
+     * 이어붙이기 검사에서 a[mid-1] > a[mid] 임이 이미 확인됐으므로
+     * lowerBound가 반드시 mid보다 큰 자리를 돌려주어 회전이 비지 않는다. */
     if (mid - lo >= hi - mid) {
-        /* 왼쪽이 더 길다. 왼쪽 한가운데를 오른쪽에 끼워 넣는다. */
+        /* 왼쪽이 더 길거나 같다. 왼쪽 한가운데를 오른쪽에 끼워 넣는다. */
         i = lo + (mid - lo) / 2;
         j = lowerBound(c, mid, hi, i);
     } else {
-        /* 오른쪽이 더 길다. 오른쪽 한가운데를 왼쪽에 끼워 넣는다. */
+        /* 오른쪽이 더 길다. 길이가 2 이상이므로 j > mid 가 보장된다. */
         j = mid + (hi - mid) / 2;
         i = upperBound(c, lo, mid, j);
     }
@@ -109,6 +119,10 @@ static void mergeInPlace(SortCtx *c, size_t lo, size_t mid, size_t hi, size_t de
      * 재귀는 매번 짧아진다. */
     rotateRange(c, i, mid, j);
     size_t newMid = i + (j - mid);
+    /* 진행 보장: 아래 두 호출이 반드시 더 짧아야 한다. newMid > lo 가 그 조건이고,
+     * 위의 '>=' 가 그것을 지킨다. 조건을 '>' 로 바꾸면 여기서 걸린다 — 그렇지
+     * 않으면 같은 인자로 영원히 다시 불려 멈추지 않는다. */
+    assert(newMid > lo);
     mergeInPlace(c, lo, i, newMid, depth + 1);
     mergeInPlace(c, newMid, j, hi, depth + 1);
 }
