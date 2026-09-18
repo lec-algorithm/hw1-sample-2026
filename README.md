@@ -4,6 +4,7 @@
 컴파일러와 Python이 들어 있는 컨테이너, `src`/`tests` 뼈대, 그리고 그것이
 실제로 도는지 보여 주는 정렬 예제 하나가 들어 있습니다.
 
+- 정렬 비교 보고서: [REPORT.md](REPORT.md)
 - 강의 자료: [lec-algorithm.github.io/lecture](https://lec-algorithm.github.io/lecture/)
 - 강의 예제 코드: [lec-algorithm/algorithm-code](https://github.com/lec-algorithm/algorithm-code)
 - 시각화 자료: [lec-algorithm/algorithm-viz](https://github.com/lec-algorithm/algorithm-viz)
