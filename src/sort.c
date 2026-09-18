@@ -1,20 +1,97 @@
+/* 공통 토대 — 구현 셋이 함께 쓰는 도구와, 그 구현들을 모아 둔 표.
+ *
+ * 정렬 알고리즘 자체는 각각 제 파일에 있다:
+ *   insertionSort.c · bubbleSort.c · blockSort.c
+ */
 #include "sort.h"
 
-void bubbleSort(int a[], int n) {
-    for (int i = 0; i < n - 1; i++) {
-        int swapped = 0;
-        /* 한 번 훑을 때마다 가장 큰 값이 뒤로 밀려 자리를 잡는다. */
-        for (int j = 0; j < n - 1 - i; j++) {
-            if (a[j] > a[j + 1]) {
-                int tmp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = tmp;
-                swapped = 1;
-            }
-        }
-        /* 한 바퀴 동안 교환이 없었다면 이미 정렬된 것이다. */
-        if (!swapped) {
-            return;
-        }
+#include <stdlib.h>
+#include <string.h>
+
+#include "sortctx.h"
+
+void sortStatsReset(SortStats *stats) {
+    if (stats == NULL) {
+        return;
+    }
+    stats->compares = 0;
+    stats->moves = 0;
+    stats->extraBytes = 0;
+    stats->maxDepth = 1; /* 재귀를 쓰지 않아도 깊이는 1로 센다 */
+}
+
+int sortCompareInt(const void *a, const void *b) {
+    int x = *(const int *)a;
+    int y = *(const int *)b;
+    return (x > y) - (x < y); /* 뺄셈은 overflow가 날 수 있어 쓰지 않는다 */
+}
+
+/* --- 작업 문맥 --------------------------------------------------------- */
+
+int sortBegin(SortCtx *c, void *base, size_t n, size_t size,
+              SortCompare cmp, SortStats *stats) {
+    sortStatsReset(stats);
+    if (base == NULL || cmp == NULL || size == 0 || n < 2) {
+        return 0;
+    }
+    c->base = (char *)base;
+    c->size = size;
+    c->cmp = cmp;
+    c->stats = stats;
+    c->tmp = (char *)malloc(size); /* 원소 한 칸. 추가 메모리는 이것뿐이다 */
+    if (c->tmp == NULL) {
+        return 0;
+    }
+    if (stats != NULL) {
+        stats->extraBytes = size;
+    }
+    return 1;
+}
+
+void sortEnd(SortCtx *c) {
+    free(c->tmp);
+    c->tmp = NULL;
+}
+
+char *sortElemAt(const SortCtx *c, size_t i) {
+    return c->base + i * c->size;
+}
+
+int sortCompareAt(SortCtx *c, size_t i, size_t j) {
+    if (c->stats != NULL) {
+        c->stats->compares++;
+    }
+    return c->cmp(sortElemAt(c, i), sortElemAt(c, j));
+}
+
+int sortCompareTmp(SortCtx *c, size_t i) {
+    if (c->stats != NULL) {
+        c->stats->compares++;
+    }
+    return c->cmp(sortElemAt(c, i), c->tmp);
+}
+
+void sortMove(SortCtx *c, void *dst, const void *src) {
+    memcpy(dst, src, c->size);
+    if (c->stats != NULL) {
+        c->stats->moves++;
     }
 }
+
+void sortSwap(SortCtx *c, size_t i, size_t j) {
+    sortMove(c, c->tmp, sortElemAt(c, i));
+    sortMove(c, sortElemAt(c, i), sortElemAt(c, j));
+    sortMove(c, sortElemAt(c, j), c->tmp);
+}
+
+/* --- 구현 표 ----------------------------------------------------------- */
+
+/* 정렬을 하나 더 만들면 파일을 하나 더 두고 여기에 한 줄 넣는다.
+ * main.c도 테스트도 이 표만 훑으므로 그것으로 끝이다. */
+const SortAlgorithm SORT_ALGORITHMS[] = {
+    {"insertionSort", "O(n^2)", "O(1)", 1, insertionSort},
+    {"bubbleSort",    "O(n^2)", "O(1)", 1, bubbleSort},
+    {"blockSort",     "O(n log^2 n)", "O(1)", 1, blockSort},
+};
+
+const size_t SORT_ALGORITHM_COUNT = sizeof(SORT_ALGORITHMS) / sizeof(SORT_ALGORITHMS[0]);
