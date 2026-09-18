@@ -35,6 +35,7 @@ typedef struct SortAlgorithm {
 
 void insertionSort(void *base, size_t n, size_t size, SortCompare cmp, SortStats *stats);
 void bubbleSort(void *base, size_t n, size_t size, SortCompare cmp, SortStats *stats);
+void blockSort(void *base, size_t n, size_t size, SortCompare cmp, SortStats *stats);
 
 /* 구현 셋을 담은 표. 호출하는 쪽은 이 표만 훑으면 된다.
  * 정렬을 하나 더 만들면 표에 한 줄 넣는 것으로 끝난다. */

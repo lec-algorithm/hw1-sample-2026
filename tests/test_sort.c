@@ -110,6 +110,45 @@ static void expectMatchesQsort(const SortAlgorithm *algo) {
     free(want);
 }
 
+/* --- 크기를 바꿔 가며 --------------------------------------------------- */
+
+/* 블록 정렬은 블록 경계·병합 경계에서 틀리기 쉽다. 2의 거듭제곱이 아닌
+ * 크기까지 훑어 본다. 안정성도 같은 자리에서 함께 본다. */
+static void expectManySizes(const SortAlgorithm *algo) {
+    enum { MAX_N = 200 };
+    Tagged a[MAX_N];
+    Tagged want[MAX_N];
+    SortStats stats;
+    int ok = 1;
+
+    srand(20260902);
+    for (size_t n = 0; n <= MAX_N; n++) {
+        for (size_t i = 0; i < n; i++) {
+            a[i].key = rand() % 20; /* 중복이 많은 입력 */
+            a[i].tag = (int)i;
+            want[i] = a[i];
+        }
+        /* qsort는 안정 정렬이 아니므로 tag까지 견줄 수 없다. key 순서는
+         * qsort로 확인하고, tag 순서는 따로 본다. */
+        qsort(want, n, sizeof(want[0]), taggedCompare);
+        algo->sort(a, n, sizeof(a[0]), taggedCompare, &stats);
+
+        for (size_t i = 0; i < n; i++) {
+            if (a[i].key != want[i].key) {
+                ok = 0;
+            }
+            if (i > 0 && a[i - 1].key == a[i].key && a[i - 1].tag > a[i].tag) {
+                ok = 0; /* 같은 key인데 입력 순서가 뒤집혔다 */
+            }
+        }
+        if (!ok) {
+            printf("      n = %zu에서 어긋났다\n", n);
+            break;
+        }
+    }
+    report(algo->name, "n = 0..200 전부 정렬되고 안정하다", ok);
+}
+
 /* --- 측정값이 채워지는지 --------------------------------------------- */
 
 static void expectStats(const SortAlgorithm *algo) {
@@ -164,6 +203,7 @@ int main(void) {
             expectSorted(algo, "빈 배열", a, want, 0);
         }
         expectStable(algo);
+        expectManySizes(algo);
         expectMatchesQsort(algo);
         expectStats(algo);
         printf("\n");
