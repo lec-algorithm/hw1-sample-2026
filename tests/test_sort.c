@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bench.h"
 #include "sort.h"
 
 static int checks = 0;
@@ -50,22 +51,13 @@ static void expectSorted(const SortAlgorithm *algo, const char *name,
 
 /* --- 안정성 ----------------------------------------------------------- */
 
-/* key로 정렬하고 tag에는 입력 순서를 담아 둔다. 정렬 뒤에도 같은 key끼리
+/* 원소와 비교 함수는 bench.h의 Record·recordCompare를 그대로 쓴다.
+ * key로 정렬하고 tag에는 입력 순서를 담아 둔다. 정렬 뒤에도 같은 key끼리
  * tag가 오름차순이면 안정 정렬이다. */
-typedef struct Tagged {
-    int key;
-    int tag;
-} Tagged;
-
-static int taggedCompare(const void *a, const void *b) {
-    int x = ((const Tagged *)a)->key;
-    int y = ((const Tagged *)b)->key;
-    return (x > y) - (x < y);
-}
 
 static void expectStable(const SortAlgorithm *algo) {
     enum { N = 60 };
-    Tagged a[N];
+    Record a[N];
     SortStats stats;
 
     /* key는 0~4만 쓴다. 중복이 많아야 안정성이 드러난다. */
@@ -73,7 +65,7 @@ static void expectStable(const SortAlgorithm *algo) {
         a[i].key = (i * 7) % 5;
         a[i].tag = i;
     }
-    algo->sort(a, N, sizeof(a[0]), taggedCompare, &stats);
+    algo->sort(a, N, sizeof(a[0]), recordCompare, &stats);
 
     int ok = 1;
     for (int i = 1; i < N; i++) {
@@ -116,8 +108,8 @@ static void expectMatchesQsort(const SortAlgorithm *algo) {
  * 크기까지 훑어 본다. 안정성도 같은 자리에서 함께 본다. */
 static void expectManySizes(const SortAlgorithm *algo) {
     enum { MAX_N = 200 };
-    Tagged a[MAX_N];
-    Tagged want[MAX_N];
+    Record a[MAX_N];
+    Record want[MAX_N];
     SortStats stats;
     int ok = 1;
 
@@ -130,8 +122,8 @@ static void expectManySizes(const SortAlgorithm *algo) {
         }
         /* qsort는 안정 정렬이 아니므로 tag까지 견줄 수 없다. key 순서는
          * qsort로 확인하고, tag 순서는 따로 본다. */
-        qsort(want, n, sizeof(want[0]), taggedCompare);
-        algo->sort(a, n, sizeof(a[0]), taggedCompare, &stats);
+        qsort(want, n, sizeof(want[0]), recordCompare);
+        algo->sort(a, n, sizeof(a[0]), recordCompare, &stats);
 
         for (size_t i = 0; i < n; i++) {
             if (a[i].key != want[i].key) {
@@ -159,6 +151,68 @@ static void expectStats(const SortAlgorithm *algo) {
     report(algo->name, "측정값이 채워진다",
            stats.compares > 0 && stats.moves > 0 &&
            stats.extraBytes == sizeof(a[0]) && stats.maxDepth >= 1);
+}
+
+/* --- 측정 도구 자체 (bench.c) ----------------------------------------- */
+
+static void expectInputShapes(void) {
+    enum { N = 40 };
+    Record a[N];
+    int ok = 1;
+
+    makeInput(a, N, INPUT_SORTED, 1u);
+    if (!recordsSorted(a, N)) {
+        ok = 0;
+    }
+    for (int i = 0; i < N; i++) {
+        if (a[i].tag != i) {
+            ok = 0; /* tag에는 입력 순서가 들어 있어야 한다 */
+        }
+    }
+    report("bench", "makeInput(정렬됨)이 정렬된 입력을 만든다", ok);
+
+    makeInput(a, N, INPUT_REVERSED, 1u);
+    report("bench", "makeInput(역순)이 역순 입력을 만든다",
+           N > 1 && !recordsSorted(a, N) && a[0].key > a[N - 1].key);
+
+    makeInput(a, N, INPUT_FEW_UNIQUE, 1u);
+    int distinct = 0;
+    for (int i = 0; i < N; i++) {
+        int seen = 0;
+        for (int j = 0; j < i; j++) {
+            if (a[j].key == a[i].key) {
+                seen = 1;
+            }
+        }
+        distinct += !seen;
+    }
+    report("bench", "makeInput(중복많음)의 서로 다른 key가 적다", distinct <= 8);
+}
+
+static void expectDetectorsCatchViolations(void) {
+    Record a[4] = {{1, 0}, {1, 1}, {2, 2}, {2, 3}};
+
+    report("bench", "정렬·안정 판정이 멀쩡한 배열을 통과시킨다",
+           recordsSorted(a, 4) && recordsStable(a, 4));
+
+    Record swapped[4] = {{1, 1}, {1, 0}, {2, 2}, {2, 3}};
+    report("bench", "같은 key의 순서가 뒤집히면 안정하지 않다고 본다",
+           recordsSorted(swapped, 4) && !recordsStable(swapped, 4));
+
+    Record unsorted[4] = {{2, 0}, {1, 1}, {3, 2}, {4, 3}};
+    report("bench", "정렬되지 않은 배열을 잡아낸다", !recordsSorted(unsorted, 4));
+}
+
+static void expectBenchRun(const SortAlgorithm *algo) {
+    enum { N = 300 };
+    Record input[N];
+
+    makeInput(input, N, INPUT_FEW_UNIQUE, 20260903u);
+    BenchResult r = benchRun(algo, input, N, 2);
+
+    report(algo->name, "benchRun이 정렬·안정·측정값을 채운다",
+           r.sorted && r.stable == algo->stable && r.millis >= 0.0 &&
+           r.stats.compares > 0 && r.n == N && r.algo == algo);
 }
 
 /* --- 전부 돌린다 ------------------------------------------------------ */
@@ -206,8 +260,12 @@ int main(void) {
         expectManySizes(algo);
         expectMatchesQsort(algo);
         expectStats(algo);
+        expectBenchRun(algo);
         printf("\n");
     }
+
+    expectInputShapes();
+    expectDetectorsCatchViolations();
 
     printf("%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;

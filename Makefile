@@ -47,8 +47,8 @@ debug: src/main.debug.out
 %.debug.out: %.c
 	$(CC) $(DEBUGFLAGS) -I$(@D) -o $@ $(wildcard $(@D)/*.c)
 
-tests/test_sort.out: tests/test_sort.c src/sort.c src/sort.h
-	$(CC) $(CFLAGS) -Isrc -o $@ tests/test_sort.c src/sort.c
+tests/test_sort.out: tests/test_sort.c src/sort.c src/sort.h src/bench.c src/bench.h
+	$(CC) $(CFLAGS) -Isrc -o $@ tests/test_sort.c src/sort.c src/bench.c
 
 clean:
 	rm -f src/*.out tests/*.out
