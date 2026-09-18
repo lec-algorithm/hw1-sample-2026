@@ -101,6 +101,7 @@ ok    insertionSort  이미 정렬된 배열
 | --- | --- |
 | `make run` | 예제 실행 |
 | `make test` | 유닛 테스트 |
+| `make charts` | 비교 그래프(SVG)를 `docs/` 아래에 다시 만든다 |
 | `make debug` | 디버그 심볼을 넣어 빌드 |
 | `make clean` | 빌드 산출물 정리 |
 
@@ -170,7 +171,9 @@ algorithm-env/
 │   ├── bubbleSort.c                 # 버블 정렬
 │   ├── blockSort.c                  # 블록 정렬
 │   ├── bench.h · bench.c            # 시간 · 메모리 · 안정성 측정
-│   └── main.c                       # 비교 결과 출력
+│   └── main.c                       # 비교 결과 출력 (--csv 옵션 있음)
+├── tools/                           # 비교 그래프를 그리는 스크립트 (표준 모듈만)
+├── docs/                            # 그래프(SVG)와 측정값 원본
 └── tests/
     └── test_sort.c                  # 유닛 테스트 (표준 C만 사용)
 ```
