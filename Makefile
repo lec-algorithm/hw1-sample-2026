@@ -3,7 +3,7 @@
 #
 #   make run     예제 실행
 #   make test    유닛 테스트
-#   make charts  비교 그래프(SVG)를 docs/ 아래에 다시 만든다
+#   make charts  비교 그래프(SVG)를 report/ 아래에 다시 만든다
 #   make debug   디버그 심볼을 넣어 빌드 (VS Code의 F5가 쓴다)
 #   make clean   빌드 산출물 정리
 #

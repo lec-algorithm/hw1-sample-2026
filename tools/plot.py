@@ -3,7 +3,7 @@
     make charts          # 또는
     python3 tools/plot.py
 
-src/main.out --csv 를 돌려 측정값을 받아 docs/ 아래에 SVG를 쓴다. 사람이 읽는
+src/main.out --csv 를 돌려 측정값을 받아 report/ 아래에 SVG를 쓴다. 사람이 읽는
 표를 파싱하지 않고 CSV를 쓰는 이유는, 표의 모양이 바뀌어도 그래프가 깨지지
 않게 하려는 것이다.
 
@@ -22,7 +22,7 @@ import svgchart  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 BINARY = ROOT / "src" / "main.out"
-OUT_DIR = ROOT / "docs"
+OUT_DIR = ROOT / "report"
 ALGOS = ["insertionSort", "bubbleSort", "blockSort"]
 KIND_LABEL = {
     "random": "무작위",
