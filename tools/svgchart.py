@@ -48,6 +48,15 @@ def si(value):
     return f"{value:g}"
 
 
+def ms(value):
+    """시간(ms) 막대에 붙일 라벨. 0.004와 27.9를 한 축에서 함께 읽혀야 한다."""
+    if value >= 10:
+        return f"{value:.0f}"
+    if value >= 1:
+        return f"{value:.1f}"
+    return f"{value:.3f}".rstrip("0").rstrip(".")
+
+
 def nice_ticks(hi, count=5):
     """0부터 hi 위까지, 사람이 읽기 좋은 간격으로 끊은 눈금."""
     if hi <= 0:

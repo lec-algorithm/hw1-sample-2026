@@ -93,14 +93,40 @@ def main():
         sizes, by_algo(growth, "millis", sizes, "n"),
         "n (원소 개수)", "시간 (ms)"))
 
-    # 3. 입력 모양이 바뀌면 (로그 축 — 정렬된 입력과 최악이 3자릿수 차이다)
+    # 3. 입력 모양별 — 표의 네 열을 각각 그래프로 (n = 4,000)
+    shape_labels = [KIND_LABEL[k] for k in kind_keys]
+
+    # 3-1. 걸린 시간. 정렬된 입력과 최악이 4자릿수 차이라 세로축을 로그로 둔다.
     made.append(svgchart.grouped_bar_chart(
-        OUT_DIR / "input-shapes.svg",
+        OUT_DIR / "input-shapes-time.svg",
+        "입력 모양에 따른 걸린 시간",
+        "n = 4,000 · 3회 평균 · 세로축 로그 (0.004ms와 29ms를 한 축에 담아야 한다)",
+        shape_labels, by_algo(kinds, "millis", kind_keys, "input"),
+        "시간 (ms)", log_scale=True, value_label=svgchart.ms))
+
+    # 3-2. 비교 횟수
+    made.append(svgchart.grouped_bar_chart(
+        OUT_DIR / "input-shapes-compares.svg",
         "입력 모양에 따른 비교 횟수",
         "n = 4,000 · 세로축 로그 · 정렬된 입력에서는 셋 다 n-1번으로 끝난다",
-        [KIND_LABEL[k] for k in kind_keys],
-        by_algo(kinds, "compares", kind_keys, "input"),
+        shape_labels, by_algo(kinds, "compares", kind_keys, "input"),
         "비교 횟수", log_scale=True))
+
+    # 3-3. 이동 횟수. 정렬된 입력은 0이라 로그 축에서 막대가 사라진다(그것이 답이다).
+    made.append(svgchart.grouped_bar_chart(
+        OUT_DIR / "input-shapes-moves.svg",
+        "입력 모양에 따른 이동 횟수",
+        "n = 4,000 · 세로축 로그 · 정렬된 입력은 0회라 막대가 없다",
+        shape_labels, by_algo(kinds, "moves", kind_keys, "input"),
+        "이동 횟수", log_scale=True))
+
+    # 3-4. 재귀 깊이. 값이 작아 로그가 필요 없다.
+    made.append(svgchart.grouped_bar_chart(
+        OUT_DIR / "input-shapes-depth.svg",
+        "입력 모양에 따른 재귀 깊이",
+        "n = 4,000 · 삽입·버블은 반복문뿐이라 늘 1이다. 블록 정렬만 입력을 탄다",
+        shape_labels, by_algo(kinds, "maxDepth", kind_keys, "input"),
+        "재귀 깊이"))
 
     # 4. 비교는 비슷한데 이동이 다르다 — 버블 정렬이 느린 진짜 이유
     reversed_rows = pick(kinds, input="reversed")
