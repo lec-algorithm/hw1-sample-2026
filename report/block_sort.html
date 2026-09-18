@@ -76,7 +76,8 @@ input[type=range] { width: 100%; accent-color: var(--left); margin: 4px 0 0; }
 .note { min-height: 3.2em; margin: 0; }
 .note b { color: var(--left); }
 /* ---- 배열 ---- */
-.board { display: grid; gap: 4px 3px; margin: 18px 0 6px; }
+.board-wrap { overflow-x: auto; margin: 18px 0 6px; padding-bottom: 4px; }
+.board { display: grid; gap: 4px 2px; min-width: calc(var(--n) * 20px); }
 .band {
   grid-row: 1; font-size: .68rem; font-weight: 700; text-align: center;
   border-radius: 6px 6px 0 0; padding: 2px 0; border: 1px solid; border-bottom: none;
@@ -93,9 +94,9 @@ input[type=range] { width: 100%; accent-color: var(--left); margin: 4px 0 0; }
 }
 .cell {
   grid-row: 2; display: flex; align-items: center; justify-content: center;
-  aspect-ratio: 1 / 1; font-family: var(--mono); font-size: clamp(13px, 3.4vw, 19px);
+  height: 34px; font-family: var(--mono); font-size: clamp(10px, 2.1vw, 15px);
   font-weight: 600; background: var(--surface); color: var(--ink);
-  border: 1.5px solid var(--border); border-radius: 8px;
+  border: 1.5px solid var(--border); border-radius: 6px;
   transition: background-color .18s, border-color .18s, transform .18s;
 }
 .cell.in-left  { border-color: var(--left);  background: var(--left-soft); }
@@ -108,7 +109,7 @@ input[type=range] { width: 100%; accent-color: var(--left); margin: 4px 0 0; }
   0% { transform: translateY(-5px) scale(1.1); background: var(--rot-soft); }
   100% { transform: none; }
 }
-.idx { grid-row: 4; text-align: center; font-family: var(--mono); font-size: .66rem; color: var(--muted); }
+.idx { grid-row: 4; text-align: center; font-family: var(--mono); font-size: 8.5px; color: var(--muted); }
 /* ---- 범례 · 설명 ---- */
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .76rem; color: var(--muted); margin-top: 10px; }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -128,24 +129,26 @@ code, kbd {
 <body>
 <div class="wrap">
 
-<h1>블록 정렬, 열 개로 한 걸음씩</h1>
+<h1>블록 정렬, 한 걸음씩</h1>
 <p class="lede">
-  무작위 숫자 10개가 정렬되는 과정을 한 단계씩 따라간다.
-  <a href="REPORT.md">보고서 2.3절</a>의 구현(<code>src/blockSort.c</code>)과 같은 순서로 돈다.
+  무작위 숫자가 정렬되는 과정을 한 단계씩 따라간다. 블록 크기까지
+  <a href="REPORT.md">보고서 2.3절</a>의 구현(<code>src/blockSort.c</code>)과 같은 값을 쓴다.
 </p>
 
 <div class="card">
   <div class="controls">
     <button id="shuffle">새 배열</button>
-    <label class="counter">블록 크기
-      <select id="blockSize">
-        <option value="2">2</option>
-        <option value="3" selected>3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
+    <label class="counter">원소 수
+      <select id="size">
+        <option value="20" selected>20</option>
+        <option value="24">24</option>
+        <option value="40">40</option>
+        <option value="64">64</option>
       </select>
     </label>
+    <span class="counter" id="blockinfo"></span>
     <span class="spacer"></span>
+    <button id="skip" title="1단계를 건너뛰고 병합부터 본다">2단계로 ⏩</button>
     <button id="first" title="처음으로">⏮</button>
     <button id="prev" title="이전 단계">◀</button>
     <button id="play" class="primary">▶ 재생</button>
@@ -161,7 +164,7 @@ code, kbd {
   </div>
   <p class="note" id="note"></p>
 
-  <div class="board" id="board"></div>
+  <div class="board-wrap"><div class="board" id="board"></div></div>
   <input type="range" id="scrub" min="0" value="0" step="1">
 
   <div class="legend">
@@ -218,12 +221,16 @@ code, kbd {
 </div>
 
 <div class="warn">
-  <b>블록 크기에 대하여.</b> <code>src/blockSort.c</code>는 블록 크기를
-  <code>ceil(√n)</code>으로 잡되 <b>하한을 16</b>으로 둔다. 너무 잘게 자르면 병합만
-  늘어나기 때문이다. 그래서 실제 코드에서 <code>n = 10</code>이면 배열 전체가 블록
-  하나가 되고, <b>삽입 정렬 한 번으로 끝나 병합이 아예 일어나지 않는다.</b>
-  여기서는 구조를 보여 주려고 블록 크기를 직접 고르게 했다. 위 선택 상자를 2에서
-  5까지 바꿔 보면, 블록을 잘게 자를수록 병합 단계가 길어지는 것이 보인다.
+  <b>왜 원소가 20개부터인가.</b> <code>src/blockSort.c</code>의
+  <code>blockSizeFor()</code>는 블록 크기를 <code>ceil(√n)</code>으로 잡되
+  <b>하한을 16</b>으로 둔다. 너무 잘게 자르면 병합만 늘어나기 때문이다.
+  그래서 원소가 16개 이하면 배열 전체가 블록 하나가 되어,
+  <b>삽입 정렬 한 번으로 끝나고 병합이 아예 일어나지 않는다.</b>
+  블록 정렬이 블록 정렬답게 도는 것을 보려면 원소가 17개 이상이어야 한다.
+  그래서 기본값이 20이다. 병합이 도는 가장 작은 크기이고, 단계도 60여 개로 짧다.
+  원소 수를 40으로 올리면 조각이 셋으로 늘고 <b>폭을 두 배로 넓히는 두 번째 병합</b>까지
+  돈다(단계 200여 개, 1단계는 <b>2단계로 ⏩</b>로 건너뛸 수 있다). 블록 크기가 16보다 커지는 것은 <code>ceil(√n) &gt; 16</code>,
+  즉 원소가 <b>256개를 넘을 때</b>부터다.
 </div>
 
 <p class="foot">
@@ -262,8 +269,9 @@ function buildSteps(values, block) {
   };
 
   push({ phase: 0, title: "시작", bands: blockBands(),
-         note: `무작위 숫자 ${n}개다. 블록 크기를 <b>${block}</b>으로 잡아 ` +
-               `${Math.ceil(n / block)}조각으로 나눴다.` });
+         note: `무작위 숫자 ${n}개다. 블록 크기는 <code>blockSizeFor(${n})</code> = ` +
+               `<b>${block}</b>이라 ${Math.ceil(n / block)}조각으로 나뉜다. ` +
+               "마지막 조각은 남는 만큼만 차지한다." });
 
   /* --- 1단계: 블록마다 삽입 정렬 --- */
   function insertionSortRange(lo, hi) {
@@ -409,16 +417,23 @@ function buildSteps(values, block) {
 /* ------------------------------------------------------------------ *
  * 화면
  * ------------------------------------------------------------------ */
-const N = 10;
 const PHASE_NAME = ["시작", "1단계 · 블록 정렬", "2단계 · 제자리 병합", "완료"];
+const BLOCK_MIN = 16;          /* src/blockSort.c와 같은 값 */
 const el = (id) => document.getElementById(id);
 const board = el("board"), scrub = el("scrub");
 
-let steps = [], at = 0, timer = null, values = [];
+let N = 20, steps = [], at = 0, timer = null, values = [];
 
-function randomValues() {
+/* src/blockSort.c의 blockSizeFor()와 같다: ceil(sqrt(n)), 하한 16. */
+function blockSizeFor(n) {
+  let b = 1;
+  while (b * b < n) { b++; }
+  return b < BLOCK_MIN ? BLOCK_MIN : b;
+}
+
+function randomValues(n) {
   const out = [];
-  while (out.length < N) {
+  while (out.length < n) {
     const v = 10 + Math.floor(Math.random() * 90);
     if (!out.includes(v)) { out.push(v); }   /* 값이 겹치면 설명이 헷갈린다 */
   }
@@ -426,8 +441,13 @@ function randomValues() {
 }
 
 function rebuild(fresh) {
-  if (fresh) { values = randomValues(); }
-  steps = buildSteps(values, Number(el("blockSize").value));
+  N = Number(el("size").value);
+  if (fresh || values.length !== N) { values = randomValues(N); }
+  const block = blockSizeFor(N);
+  const root = Math.ceil(Math.sqrt(N));
+  el("blockinfo").textContent =
+    `블록 크기 ${block} = max(${BLOCK_MIN}, \u2308\u221a${N}\u2309=${root})`;
+  steps = buildSteps(values, block);
   at = 0;
   scrub.max = String(steps.length - 1);
   render();
@@ -446,6 +466,7 @@ function render() {
   scrub.value = String(at);
 
   board.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
+  board.style.setProperty("--n", String(N));
   board.textContent = "";
 
   const kindOf = new Array(N).fill(null);
@@ -504,11 +525,16 @@ function toggle() {
   if (timer) { stop(); return; }
   if (at === steps.length - 1) { at = 0; }
   el("play").textContent = "❚❚ 정지";
-  timer = setInterval(() => go(at + 1), 900);
+  timer = setInterval(() => go(at + 1), 550);
 }
 
 el("shuffle").addEventListener("click", () => { stop(); rebuild(true); });
-el("blockSize").addEventListener("change", () => { stop(); rebuild(false); });
+el("size").addEventListener("change", () => { stop(); rebuild(true); });
+el("skip").addEventListener("click", () => {
+  stop();
+  const i = steps.findIndex((s) => s.phase === 2);
+  go(i < 0 ? steps.length - 1 : i);   /* 병합이 없으면 끝으로 */
+});
 el("first").addEventListener("click", () => { stop(); go(0); });
 el("prev").addEventListener("click", () => { stop(); go(at - 1); });
 el("next").addEventListener("click", () => { stop(); go(at + 1); });
