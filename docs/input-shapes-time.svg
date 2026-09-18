@@ -1,48 +1,46 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif">
   <rect width="720" height="420" fill="#fbfbf9"/>
-  <text x="20.0" y="30.0" font-size="16" fill="#24292f" text-anchor="start" font-weight="600">입력 모양에 따른 걸린 시간</text>
-  <text x="20.0" y="50.0" font-size="11.5" fill="#6e7781" text-anchor="start" font-weight="400">n = 4,000 · 3회 평균 · 세로축 로그 (0.004ms와 29ms를 한 축에 담아야 한다)</text>
+  <text x="20.0" y="30.0" font-size="16" fill="#24292f" text-anchor="start" font-weight="600">입력 모양에 따른 걸린 시간 — 선형 축</text>
+  <text x="20.0" y="50.0" font-size="11.5" fill="#6e7781" text-anchor="start" font-weight="400">n = 4,000 · 막대 높이가 곧 값의 비율이다. 대신 작은 값은 바닥에 붙는다</text>
   <line x1="78.0" y1="358.0" x2="696.0" y2="358.0" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="362.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">0.001</text>
-  <line x1="78.0" y1="301.2" x2="696.0" y2="301.2" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="305.2" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">0.01</text>
-  <line x1="78.0" y1="244.4" x2="696.0" y2="244.4" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="248.4" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">0.1</text>
-  <line x1="78.0" y1="187.6" x2="696.0" y2="187.6" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="191.6" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">1</text>
-  <line x1="78.0" y1="130.8" x2="696.0" y2="130.8" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="134.8" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">10</text>
+  <text x="68.0" y="362.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">0</text>
+  <line x1="78.0" y1="287.0" x2="696.0" y2="287.0" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
+  <text x="68.0" y="291.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">10</text>
+  <line x1="78.0" y1="216.0" x2="696.0" y2="216.0" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
+  <text x="68.0" y="220.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">20</text>
+  <line x1="78.0" y1="145.0" x2="696.0" y2="145.0" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
+  <text x="68.0" y="149.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">30</text>
   <line x1="78.0" y1="74.0" x2="696.0" y2="74.0" stroke="#dfe1e4" stroke-width="1" stroke-dasharray="none"/>
-  <text x="68.0" y="78.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">100</text>
+  <text x="68.0" y="78.0" font-size="10.5" fill="#6e7781" text-anchor="end" font-weight="400">40</text>
   <line x1="78.0" y1="358.0" x2="696.0" y2="358.0" stroke="#6e7781" stroke-width="1" stroke-dasharray="none"/>
   <text x="20.0" y="60.0" font-size="11.5" fill="#6e7781" text-anchor="start" font-weight="400">시간 (ms)</text>
-  <rect x="102.6" y="129.5" width="32.1" height="228.5" fill="#0072B2"/>
-  <text x="118.6" y="124.5" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">11</text>
-  <rect x="137.7" y="105.2" width="32.1" height="252.8" fill="#E69F00"/>
-  <text x="153.8" y="100.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">28</text>
-  <rect x="172.8" y="194.8" width="32.1" height="163.2" fill="#009E73"/>
-  <text x="188.9" y="189.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.747</text>
+  <rect x="102.6" y="279.7" width="32.1" height="78.3" fill="#0072B2"/>
+  <text x="118.6" y="274.7" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">11</text>
+  <rect x="137.7" y="148.1" width="32.1" height="209.9" fill="#E69F00"/>
+  <text x="153.8" y="143.1" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">30</text>
+  <rect x="172.8" y="353.1" width="32.1" height="4.9" fill="#009E73"/>
+  <text x="188.9" y="348.1" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.697</text>
   <text x="155.2" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">무작위</text>
-  <rect x="257.1" y="323.8" width="32.1" height="34.2" fill="#0072B2"/>
-  <text x="273.1" y="318.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.004</text>
-  <rect x="292.2" y="318.3" width="32.1" height="39.7" fill="#E69F00"/>
-  <text x="308.2" y="313.3" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.005</text>
-  <rect x="327.3" y="323.8" width="32.1" height="34.2" fill="#009E73"/>
-  <text x="343.4" y="318.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.004</text>
+  <rect x="257.1" y="358.0" width="32.1" height="0.8" fill="#0072B2"/>
+  <text x="273.1" y="353.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.004</text>
+  <rect x="292.2" y="358.0" width="32.1" height="0.8" fill="#E69F00"/>
+  <text x="308.2" y="353.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.005</text>
+  <rect x="327.3" y="358.0" width="32.1" height="0.8" fill="#009E73"/>
+  <text x="343.4" y="353.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.005</text>
   <text x="309.8" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">정렬됨</text>
-  <rect x="411.6" y="112.1" width="32.1" height="245.9" fill="#0072B2"/>
-  <text x="427.6" y="107.1" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">21</text>
-  <rect x="446.7" y="103.4" width="32.1" height="254.6" fill="#E69F00"/>
-  <text x="462.8" y="98.4" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">30</text>
-  <rect x="481.8" y="199.5" width="32.1" height="158.5" fill="#009E73"/>
-  <text x="497.9" y="194.5" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.617</text>
+  <rect x="411.6" y="210.2" width="32.1" height="147.8" fill="#0072B2"/>
+  <text x="427.6" y="205.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">21</text>
+  <rect x="446.7" y="140.5" width="32.1" height="217.5" fill="#E69F00"/>
+  <text x="462.8" y="135.5" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">31</text>
+  <rect x="481.8" y="354.2" width="32.1" height="3.8" fill="#009E73"/>
+  <text x="497.9" y="349.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.53</text>
   <text x="464.2" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">역순</text>
-  <rect x="566.1" y="122.0" width="32.1" height="236.0" fill="#0072B2"/>
-  <text x="582.1" y="117.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">14</text>
-  <rect x="601.2" y="106.0" width="32.1" height="252.0" fill="#E69F00"/>
-  <text x="617.2" y="101.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">27</text>
-  <rect x="636.3" y="208.4" width="32.1" height="149.6" fill="#009E73"/>
-  <text x="652.4" y="203.4" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.431</text>
+  <rect x="566.1" y="293.8" width="32.1" height="64.2" fill="#0072B2"/>
+  <text x="582.1" y="288.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">9.0</text>
+  <rect x="601.2" y="160.5" width="32.1" height="197.5" fill="#E69F00"/>
+  <text x="617.2" y="155.5" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">28</text>
+  <rect x="636.3" y="354.8" width="32.1" height="3.2" fill="#009E73"/>
+  <text x="652.4" y="349.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0.449</text>
   <text x="618.8" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">중복많음</text>
   <line x1="78.0" y1="390.0" x2="100.0" y2="390.0" stroke="#0072B2" stroke-width="2.4" stroke-dasharray="none"/>
   <circle cx="89.0" cy="390.0" r="3" fill="#0072B2"/>

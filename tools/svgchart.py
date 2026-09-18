@@ -125,9 +125,12 @@ def _legend(canvas, names, x, y):
         x += 28 + len(name) * 6.6 + 18
 
 
-def log_line_chart(path, title, subtitle, xs, series, xlabel, ylabel,
-                   annotate_slope=True):
-    """양쪽 축이 로그인 꺾은선. 로그-로그에서 기울기가 곧 복잡도 지수다.
+def line_chart(path, title, subtitle, xs, series, xlabel, ylabel,
+               log_axes=True, annotate_slope=None):
+    """꺾은선. log_axes면 양쪽 축이 로그다.
+
+    같은 자료를 두 축으로 그리면 서로 다른 것이 보인다. 선형은 **격차의 크기**를,
+    로그-로그는 **자라는 속도**를 보여 준다(기울기가 곧 복잡도 지수).
 
     xs      : x 값 목록 (예: [1000, 2000, 4000, 8000])
     series  : {이름: [y 값, ...]}
@@ -135,23 +138,36 @@ def log_line_chart(path, title, subtitle, xs, series, xlabel, ylabel,
     W, H = 720, 420
     L, R, T, B = 78, 24, 74, 58
     c = Canvas(W, H, title, subtitle)
+    if annotate_slope is None:
+        annotate_slope = log_axes  # 기울기는 로그-로그에서만 뜻이 있다
 
     ys_all = [v for values in series.values() for v in values if v > 0]
     lo, hi = min(ys_all), max(ys_all)
-    y0, y1 = math.floor(math.log10(lo)), math.ceil(math.log10(hi))
-    x0, x1 = math.log10(min(xs)), math.log10(max(xs))
 
-    def px(v):
-        return L + (math.log10(v) - x0) / (x1 - x0) * (W - L - R)
+    if log_axes:
+        y0, y1 = math.floor(math.log10(lo)), math.ceil(math.log10(hi))
+        x0, x1 = math.log10(min(xs)), math.log10(max(xs))
+        yticks = [10 ** e for e in range(y0, y1 + 1)]
 
-    def py(v):
-        return H - B - (math.log10(v) - y0) / (y1 - y0) * (H - T - B)
+        def px(v):
+            return L + (math.log10(v) - x0) / (x1 - x0) * (W - L - R)
 
-    # y축: 10의 거듭제곱마다 보조선
-    for e in range(y0, y1 + 1):
-        y = py(10 ** e)
+        def py(v):
+            return H - B - (math.log10(v) - y0) / (y1 - y0) * (H - T - B)
+    else:
+        yticks, top = nice_ticks(hi)
+        x0, x1 = min(xs), max(xs)
+
+        def px(v):
+            return L + (v - x0) / (x1 - x0) * (W - L - R)
+
+        def py(v):
+            return H - B - v / top * (H - T - B)
+
+    for t in yticks:
+        y = py(t)
         c.line(L, y, W - R, y)
-        c.text(L - 10, y + 4, si(10 ** e), size=10.5, fill=MUTED, anchor="end")
+        c.text(L - 10, y + 4, si(t), size=10.5, fill=MUTED, anchor="end")
     # x축: 실제로 잰 n 값에만 눈금
     for v in xs:
         x = px(v)

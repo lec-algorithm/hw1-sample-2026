@@ -76,51 +76,46 @@ def main():
     kind_keys = ["random", "sorted", "reversed", "few-unique"]
     made = []
 
-    # 1. 비교 횟수가 n에 따라 어떻게 자라는가 (로그-로그)
-    made.append(svgchart.log_line_chart(
-        OUT_DIR / "growth-compares.svg",
-        "비교 횟수가 n에 따라 자라는 모양",
-        "무작위 입력 · 로그-로그 축에서는 기울기가 곧 복잡도 지수다 "
-        "(2.0이면 n^2, 1.0이면 n)",
-        sizes, by_algo(growth, "compares", sizes, "n"),
-        "n (원소 개수)", "비교 횟수"))
+    # 같은 자료를 두 축으로 그린다. 선형은 격차의 크기를, 로그는 작은 값과
+    # 자라는 속도를 보여 준다. 어느 한쪽만으로는 절반씩 놓친다.
+    #
+    # 1. n에 따라 자라는 모양
+    for field, unit, noun, stem in (
+            ("compares", "비교 횟수", "비교 횟수", "growth-compares"),
+            ("millis", "시간 (ms)", "걸린 시간", "growth-time")):
+        data = by_algo(growth, field, sizes, "n")
+        made.append(svgchart.line_chart(
+            OUT_DIR / f"{stem}.svg",
+            f"n이 커질 때 {noun} — 선형 축",
+            "무작위 입력 · 격차가 그대로 보이는 대신, 바닥에 깔린 값은 읽히지 않는다",
+            sizes, data, "n (원소 개수)", unit, log_axes=False))
+        made.append(svgchart.line_chart(
+            OUT_DIR / f"{stem}-log.svg",
+            f"n이 커질 때 {noun} — 로그-로그 축",
+            "기울기가 곧 복잡도 지수다 (2.0이면 n^2, 1.0이면 n)",
+            sizes, data, "n (원소 개수)", unit))
 
-    # 2. 같은 것을 시간으로
-    made.append(svgchart.log_line_chart(
-        OUT_DIR / "growth-time.svg",
-        "걸린 시간이 n에 따라 자라는 모양",
-        "무작위 입력 · 같은 기계에서 잰 값이다 (컨테이너, gcc -O2)",
-        sizes, by_algo(growth, "millis", sizes, "n"),
-        "n (원소 개수)", "시간 (ms)"))
-
-    # 3. 입력 모양별 — 표의 네 열을 각각 그래프로 (n = 4,000)
+    # 2. 입력 모양별 — 표의 네 열을 각각 그래프로 (n = 4,000)
     shape_labels = [KIND_LABEL[k] for k in kind_keys]
+    columns = (
+        ("millis", "시간 (ms)", "input-shapes-time", "걸린 시간", svgchart.ms),
+        ("compares", "비교 횟수", "input-shapes-compares", "비교 횟수", svgchart.si),
+        ("moves", "이동 횟수", "input-shapes-moves", "이동 횟수", svgchart.si),
+    )
+    for field, unit, stem, label, fmt in columns:
+        data = by_algo(kinds, field, kind_keys, "input")
+        made.append(svgchart.grouped_bar_chart(
+            OUT_DIR / f"{stem}.svg",
+            f"입력 모양에 따른 {label} — 선형 축",
+            "n = 4,000 · 막대 높이가 곧 값의 비율이다. 대신 작은 값은 바닥에 붙는다",
+            shape_labels, data, unit, value_label=fmt))
+        made.append(svgchart.grouped_bar_chart(
+            OUT_DIR / f"{stem}-log.svg",
+            f"입력 모양에 따른 {label} — 로그 축",
+            "같은 자료. 선형 축에서 사라졌던 작은 값이 여기서는 읽힌다",
+            shape_labels, data, unit, log_scale=True, value_label=fmt))
 
-    # 3-1. 걸린 시간. 정렬된 입력과 최악이 4자릿수 차이라 세로축을 로그로 둔다.
-    made.append(svgchart.grouped_bar_chart(
-        OUT_DIR / "input-shapes-time.svg",
-        "입력 모양에 따른 걸린 시간",
-        "n = 4,000 · 3회 평균 · 세로축 로그 (0.004ms와 29ms를 한 축에 담아야 한다)",
-        shape_labels, by_algo(kinds, "millis", kind_keys, "input"),
-        "시간 (ms)", log_scale=True, value_label=svgchart.ms))
-
-    # 3-2. 비교 횟수
-    made.append(svgchart.grouped_bar_chart(
-        OUT_DIR / "input-shapes-compares.svg",
-        "입력 모양에 따른 비교 횟수",
-        "n = 4,000 · 세로축 로그 · 정렬된 입력에서는 셋 다 n-1번으로 끝난다",
-        shape_labels, by_algo(kinds, "compares", kind_keys, "input"),
-        "비교 횟수", log_scale=True))
-
-    # 3-3. 이동 횟수. 정렬된 입력은 0이라 로그 축에서 막대가 사라진다(그것이 답이다).
-    made.append(svgchart.grouped_bar_chart(
-        OUT_DIR / "input-shapes-moves.svg",
-        "입력 모양에 따른 이동 횟수",
-        "n = 4,000 · 세로축 로그 · 정렬된 입력은 0회라 막대가 없다",
-        shape_labels, by_algo(kinds, "moves", kind_keys, "input"),
-        "이동 횟수", log_scale=True))
-
-    # 3-4. 재귀 깊이. 값이 작아 로그가 필요 없다.
+    # 3. 재귀 깊이. 값이 1~24라 로그가 필요 없다.
     made.append(svgchart.grouped_bar_chart(
         OUT_DIR / "input-shapes-depth.svg",
         "입력 모양에 따른 재귀 깊이",
