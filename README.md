@@ -163,7 +163,11 @@ algorithm-env/
 ├── .vscode/                         # 빌드·디버그 설정 (F5, Cmd+Shift+B)
 ├── Makefile                         # run · test · debug · clean
 ├── src/
-│   ├── sort.h · sort.c              # 공통 인터페이스와 정렬 구현
+│   ├── sort.h                       # 공통 인터페이스 (SortAlgorithm)
+│   ├── sortctx.h · sort.c           # 구현들이 함께 쓰는 도구 · 구현 표
+│   ├── insertionSort.c              # 삽입 정렬
+│   ├── bubbleSort.c                 # 버블 정렬
+│   ├── blockSort.c                  # 블록 정렬
 │   ├── bench.h · bench.c            # 시간 · 메모리 · 안정성 측정
 │   └── main.c                       # 비교 결과 출력
 └── tests/

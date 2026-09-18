@@ -41,8 +41,11 @@ debug: src/main.debug.out
 %.debug.out: %.c
 	$(CC) $(DEBUGFLAGS) -I$(@D) -o $@ $(wildcard $(@D)/*.c)
 
-tests/test_sort.out: tests/test_sort.c src/sort.c src/sort.h src/bench.c src/bench.h
-	$(CC) $(CFLAGS) -Isrc -o $@ tests/test_sort.c src/sort.c src/bench.c
+# 정렬 구현이 파일마다 하나씩이라 여기에도 나열한다. 새 정렬을 넣으면 이 줄도 본다.
+SORT_SRC = src/sort.c src/insertionSort.c src/bubbleSort.c src/blockSort.c
+
+tests/test_sort.out: tests/test_sort.c $(SORT_SRC) src/sort.h src/sortctx.h src/bench.c src/bench.h
+	$(CC) $(CFLAGS) -Isrc -o $@ tests/test_sort.c $(SORT_SRC) src/bench.c
 
 clean:
 	rm -f src/*.out tests/*.out
