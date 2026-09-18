@@ -16,8 +16,8 @@
   <text x="118.6" y="201.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">4M</text>
   <rect x="137.7" y="161.8" width="32.1" height="196.2" fill="#E69F00"/>
   <text x="153.8" y="156.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">12M</text>
-  <rect x="172.8" y="306.2" width="32.1" height="51.8" fill="#009E73"/>
-  <text x="188.9" y="301.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">352K</text>
+  <rect x="172.8" y="306.9" width="32.1" height="51.1" fill="#009E73"/>
+  <text x="188.9" y="301.9" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">346K</text>
   <text x="155.2" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">무작위</text>
   <rect x="257.1" y="358.0" width="32.1" height="0.8" fill="#0072B2"/>
   <text x="273.1" y="353.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">0</text>
@@ -30,15 +30,15 @@
   <text x="427.6" y="172.8" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">8M</text>
   <rect x="446.7" y="132.7" width="32.1" height="225.3" fill="#E69F00"/>
   <text x="462.8" y="127.7" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">24M</text>
-  <rect x="481.8" y="311.3" width="32.1" height="46.7" fill="#009E73"/>
-  <text x="497.9" y="306.3" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">311K</text>
+  <rect x="481.8" y="316.2" width="32.1" height="41.8" fill="#009E73"/>
+  <text x="497.9" y="311.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">276K</text>
   <text x="464.2" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">역순</text>
   <rect x="566.1" y="211.0" width="32.1" height="147.0" fill="#0072B2"/>
   <text x="582.1" y="206.0" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">3.6M</text>
   <rect x="601.2" y="165.9" width="32.1" height="192.1" fill="#E69F00"/>
   <text x="617.2" y="160.9" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">11M</text>
-  <rect x="636.3" y="322.2" width="32.1" height="35.8" fill="#009E73"/>
-  <text x="652.4" y="317.2" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">239K</text>
+  <rect x="636.3" y="323.1" width="32.1" height="34.9" fill="#009E73"/>
+  <text x="652.4" y="318.1" font-size="9.5" fill="#6e7781" text-anchor="middle" font-weight="400">234K</text>
   <text x="618.8" y="376.0" font-size="11.5" fill="#24292f" text-anchor="middle" font-weight="400">중복많음</text>
   <line x1="78.0" y1="390.0" x2="100.0" y2="390.0" stroke="#0072B2" stroke-width="2.4" stroke-dasharray="none"/>
   <circle cx="89.0" cy="390.0" r="3" fill="#0072B2"/>

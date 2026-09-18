@@ -1,7 +1,8 @@
 /* 정렬 비교 — 삽입 / 버블 / 블록.
  *
- *   make run              사람이 읽는 비교 표
- *   ./src/main.out --csv  같은 측정을 CSV로 (tools/plot.py가 쓴다)
+ *   make run                 사람이 읽는 비교 표
+ *   ./src/main.out --csv     같은 측정을 CSV로 (tools/plot.py가 쓴다)
+ *   ./src/main.out --blocks  블록 크기를 바꿔 가며 블록 정렬만 잰 CSV
  *
  * 부르는 쪽은 정렬 이름을 하나도 적지 않는다. 구현 표(SORT_ALGORITHMS)를
  * 훑을 뿐이다. 무엇을 잴지도 아래 SPECS 한 곳에만 적는다.
@@ -147,9 +148,60 @@ static void reportCsv(void) {
     measureAll(csvRow, NULL);
 }
 
+/* --- 블록 크기 실험 ---------------------------------------------------- */
+
+/* 구현 표에서 이름으로 찾는다. 인덱스를 박아 두면 표 순서가 바뀔 때 깨진다. */
+static const SortAlgorithm *findAlgorithm(const char *name) {
+    for (size_t k = 0; k < SORT_ALGORITHM_COUNT; k++) {
+        if (strcmp(SORT_ALGORITHMS[k].name, name) == 0) {
+            return &SORT_ALGORITHMS[k];
+        }
+    }
+    return NULL;
+}
+
+/* 블록 크기를 바꿔 가며 블록 정렬만 잰다. 기본값이 왜 상수인지를 재는 실험이다. */
+static void reportBlockSweep(void) {
+    static const size_t SIZES[] = {1000, 4000, 16000, 64000};
+    static const size_t BLOCKS[] = {2, 4, 8, 16, 24, 32, 48, 64,
+                                    96, 128, 192, 256, 512, 1024};
+    const size_t sizeCount = sizeof(SIZES) / sizeof(SIZES[0]);
+    const size_t blockCount = sizeof(BLOCKS) / sizeof(BLOCKS[0]);
+    const SortAlgorithm *algo = findAlgorithm("blockSort");
+    const size_t saved = blockSortBlockSize;
+
+    if (algo == NULL) {
+        return;
+    }
+    printf("n,block,compares,moves,millis,sorted,stable\n");
+    for (size_t s = 0; s < sizeCount; s++) {
+        size_t n = SIZES[s];
+        Record *input = (Record *)malloc(n * sizeof(Record));
+        if (input == NULL) {
+            break;
+        }
+        makeInput(input, n, INPUT_RANDOM, 20260901u);
+        for (size_t b = 0; b < blockCount; b++) {
+            if (BLOCKS[b] > n) {
+                continue;
+            }
+            blockSortBlockSize = BLOCKS[b];
+            BenchResult r = benchRun(algo, input, n, 3);
+            printf("%zu,%zu,%zu,%zu,%.3f,%d,%d\n", n, BLOCKS[b], r.stats.compares,
+                   r.stats.moves, r.millis, r.sorted, r.stable);
+        }
+        free(input);
+    }
+    blockSortBlockSize = saved;
+}
+
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "--csv") == 0) {
         reportCsv();
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "--blocks") == 0) {
+        reportBlockSweep();
         return 0;
     }
     reportTable();

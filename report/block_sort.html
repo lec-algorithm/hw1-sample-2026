@@ -144,10 +144,10 @@ code, kbd {
     <button id="shuffle">새 배열</button>
     <label class="counter">원소 수
       <select id="size">
-        <option value="20" selected>20</option>
-        <option value="24">24</option>
-        <option value="40">40</option>
+        <option value="40" selected>40</option>
+        <option value="48">48</option>
         <option value="64">64</option>
+        <option value="96">96</option>
       </select>
     </label>
     <span class="counter" id="blockinfo"></span>
@@ -230,16 +230,18 @@ code, kbd {
 </div>
 
 <div class="warn">
-  <b>왜 원소가 20개부터인가.</b> <code>src/blockSort.c</code>의
-  <code>blockSizeFor()</code>는 블록 크기를 <code>ceil(√n)</code>으로 잡되
-  <b>하한을 16</b>으로 둔다. 너무 잘게 자르면 병합만 늘어나기 때문이다.
-  그래서 원소가 16개 이하면 배열 전체가 블록 하나가 되어,
-  <b>삽입 정렬 한 번으로 끝나고 병합이 아예 일어나지 않는다.</b>
-  블록 정렬이 블록 정렬답게 도는 것을 보려면 원소가 17개 이상이어야 한다.
-  그래서 기본값이 20이다. 병합이 도는 가장 작은 크기이고, 단계도 60여 개로 짧다.
-  원소 수를 40으로 올리면 조각이 셋으로 늘고 <b>폭을 두 배로 넓히는 두 번째 병합</b>까지
-  돈다(단계 200여 개, 1단계는 <b>2단계로 ⏩</b>로 건너뛸 수 있다). 블록 크기가 16보다 커지는 것은 <code>ceil(√n) &gt; 16</code>,
-  즉 원소가 <b>256개를 넘을 때</b>부터다.
+  <b>왜 원소가 40개부터인가.</b> <code>src/blockSort.c</code>는 블록 크기를
+  <b>32 상수</b>로 쓴다(<code>blockSortBlockSize</code>). 그래서 원소가 32개 이하면
+  배열 전체가 블록 하나가 되어, <b>삽입 정렬 한 번으로 끝나고 병합이 아예 일어나지
+  않는다.</b> 블록 정렬이 블록 정렬답게 도는 것을 보려면 원소가 33개 이상이어야 한다.
+  기본값 40은 병합이 도는 것 중 가장 짧은 축이고, 96으로 올리면 <b>폭을 두 배로
+  넓히는 두 번째 병합</b>까지 돈다. 1단계는 <b>2단계로 ⏩</b>로 건너뛸 수 있다.
+  <br><br>
+  블록 크기가 <code>n</code>을 따라가지 않고 상수인 이유는 보고서의
+  <a href="REPORT.md#블록-크기는-얼마가-좋은가">블록 크기는 얼마가 좋은가</a>에서
+  재 보았다. 블록을 키우면 1단계 비용이 <code>O(n·B)</code>로 정비례해 늘고, 아껴지는
+  병합 비용은 <code>log</code> 수준으로만 준다. 그래서 최적값은 <code>n</code>과 무관한
+  작은 상수다.
 </div>
 
 <p class="foot">
@@ -278,9 +280,9 @@ function buildSteps(values, block) {
   };
 
   push({ phase: 0, title: "시작", bands: blockBands(),
-         note: `무작위 숫자 ${n}개다. 블록 크기는 <code>blockSizeFor(${n})</code> = ` +
-               `<b>${block}</b>이라 ${Math.ceil(n / block)}조각으로 나뉜다. ` +
-               "마지막 조각은 남는 만큼만 차지한다." });
+         note: `무작위 숫자 ${n}개다. 블록 크기는 <b>${block}</b> 상수라 ` +
+               `${Math.ceil(n / block)}조각으로 나뉜다. 마지막 조각은 남는 만큼만 ` +
+               "차지한다." });
 
   /* --- 1단계: 블록마다 삽입 정렬 --- */
   function insertionSortRange(lo, hi) {
@@ -452,18 +454,11 @@ function buildSteps(values, block) {
  * 화면
  * ------------------------------------------------------------------ */
 const PHASE_NAME = ["시작", "1단계 · 블록 정렬", "2단계 · 제자리 병합", "완료"];
-const BLOCK_MIN = 16;          /* src/blockSort.c와 같은 값 */
+const BLOCK_SIZE = 32;         /* src/blockSort.c의 blockSortBlockSize와 같은 값 */
 const el = (id) => document.getElementById(id);
 const board = el("board"), scrub = el("scrub");
 
-let N = 20, steps = [], at = 0, timer = null, values = [];
-
-/* src/blockSort.c의 blockSizeFor()와 같다: ceil(sqrt(n)), 하한 16. */
-function blockSizeFor(n) {
-  let b = 1;
-  while (b * b < n) { b++; }
-  return b < BLOCK_MIN ? BLOCK_MIN : b;
-}
+let N = 40, steps = [], at = 0, timer = null, values = [];
 
 function randomValues(n) {
   const out = [];
@@ -477,10 +472,9 @@ function randomValues(n) {
 function rebuild(fresh) {
   N = Number(el("size").value);
   if (fresh || values.length !== N) { values = randomValues(N); }
-  const block = blockSizeFor(N);
-  const root = Math.ceil(Math.sqrt(N));
+  const block = BLOCK_SIZE;
   el("blockinfo").textContent =
-    `블록 크기 ${block} = max(${BLOCK_MIN}, \u2308\u221a${N}\u2309=${root})`;
+    `블록 크기 ${block} (상수) · 조각 ${Math.ceil(N / block)}개`;
   steps = buildSteps(values, block);
   at = 0;
   scrub.max = String(steps.length - 1);

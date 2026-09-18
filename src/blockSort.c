@@ -13,16 +13,20 @@
 
 #include "sortctx.h"
 
-#define BLOCK_MIN 16 /* 블록 크기의 하한. 너무 잘게 자르면 병합만 늘어난다 */
-
-/* ceil(sqrt(n))을 블록 크기로 쓴다. 블록 수와 블록 크기를 함께 억제한다. */
-static size_t blockSizeFor(size_t n) {
-    size_t b = 1;
-    while (b * b < n) {
-        b++;
-    }
-    return b < BLOCK_MIN ? BLOCK_MIN : b;
-}
+/* 블록 크기 — n과 무관한 상수다.
+ *
+ * 진짜 block sort(WikiSort)는 ceil(sqrt(n))을 쓴다. 다만 거기서 sqrt(n)은
+ * 배열 안에 잡는 **내부 버퍼**의 크기이지 초기 블록의 길이가 아니다. 이
+ * 구현은 내부 버퍼를 쓰지 않으므로 sqrt(n)을 따를 이유가 없다.
+ *
+ * 블록 하나를 삽입 정렬하는 비용은 O(B^2)이고 블록이 n/B개라 합이 O(n*B)다.
+ * B에 정비례해 늘어난다. 반면 B를 키워서 아끼는 병합 비용은 log 수준으로만
+ * 준다. 그래서 최적 B는 n과 무관한 작은 상수다. 재 보면 8~32에서 평평하다
+ * (보고서 3.2 「블록 크기는 얼마가 좋은가」). timsort의 minrun이 32~64인 것도
+ * 같은 이유다.
+ *
+ * 그 실험이 이 값을 바꿔 가며 재기 때문에 const가 아니다. */
+size_t blockSortBlockSize = 32;
 
 /* a[lo..hi)를 뒤집는다. */
 static void reverseRange(SortCtx *c, size_t lo, size_t hi) {
@@ -115,7 +119,7 @@ void blockSort(void *base, size_t n, size_t size, SortCompare cmp, SortStats *st
         return;
     }
 
-    size_t block = blockSizeFor(n);
+    size_t block = blockSortBlockSize < 1 ? 1 : blockSortBlockSize;
     /* 1단계: 블록마다 삽입 정렬. 짧은 배열에서는 삽입 정렬이 제일 빠르다. */
     for (size_t lo = 0; lo < n; lo += block) {
         size_t hi = lo + block < n ? lo + block : n;

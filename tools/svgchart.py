@@ -20,14 +20,21 @@ SERIES_STYLE = {
     "bubbleSort":    ("#E69F00", "7 4"),       # 주황 · 파선
     "blockSort":     ("#009E73", "2 3"),       # 초록 · 점선
 }
-FALLBACK = ("#8c4799", "4 2 1 2")
+EXTRA = [("#0072B2", "none"), ("#E69F00", "7 4"), ("#009E73", "2 3"),
+         ("#8c4799", "4 2 1 2"), ("#CC79A7", "1 3")]
+_assigned = {}
 
 FONT = ("-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', "
         "'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif")
 
 
 def style_for(name):
-    return SERIES_STYLE.get(name, FALLBACK)
+    """알고리즘 이름은 고정 색, 그 밖의 계열은 순서대로 돌려 쓴다."""
+    if name in SERIES_STYLE:
+        return SERIES_STYLE[name]
+    if name not in _assigned:
+        _assigned[name] = EXTRA[len(_assigned) % len(EXTRA)]
+    return _assigned[name]
 
 
 def esc(text):
@@ -126,7 +133,7 @@ def _legend(canvas, names, x, y):
 
 
 def line_chart(path, title, subtitle, xs, series, xlabel, ylabel,
-               log_axes=True, annotate_slope=None):
+               log_axes=True, annotate_slope=None, vline=None, vline_label=""):
     """꺾은선. log_axes면 양쪽 축이 로그다.
 
     같은 자료를 두 축으로 그리면 서로 다른 것이 보인다. 선형은 **격차의 크기**를,
@@ -173,6 +180,11 @@ def line_chart(path, title, subtitle, xs, series, xlabel, ylabel,
         x = px(v)
         c.line(x, T, x, H - B, dash="2 4")
         c.text(x, H - B + 18, f"{v:,}", size=10.5, fill=MUTED, anchor="middle")
+
+    if vline is not None:
+        x = px(vline)
+        c.line(x, T, x, H - B, stroke=INK, width=1.4, dash="5 4")
+        c.text(x, T - 4, vline_label, size=11, fill=INK, anchor="middle", weight="600")
 
     c.line(L, H - B, W - R, H - B, stroke=MUTED)
     c.line(L, T, L, H - B, stroke=MUTED)

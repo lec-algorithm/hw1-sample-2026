@@ -42,6 +42,10 @@ void blockSort(void *base, size_t n, size_t size, SortCompare cmp, SortStats *st
 extern const SortAlgorithm SORT_ALGORITHMS[];
 extern const size_t SORT_ALGORITHM_COUNT;
 
+/* 블록 정렬이 쓰는 블록 크기. 기본 32이고, 이 값이 왜 상수인지는 blockSort.c에
+ * 적어 두었다. 블록 크기 실험(main.c --blocks)이 여기에 다른 값을 넣어 본다. */
+extern size_t blockSortBlockSize;
+
 void sortStatsReset(SortStats *stats);
 int sortCompareInt(const void *a, const void *b); /* int 배열용 기본 비교 함수 */
 

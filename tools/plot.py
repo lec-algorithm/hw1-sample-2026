@@ -32,13 +32,18 @@ KIND_LABEL = {
 }
 
 
-def load_rows():
-    """측정 프로그램을 돌려 CSV를 읽는다. 없으면 make가 만들게 한다."""
+def run_csv(flag):
+    """측정 프로그램을 돌려 CSV를 읽는다."""
     if not BINARY.exists():
         subprocess.run(["make", "src/main.out"], cwd=ROOT, check=True)
-    result = subprocess.run([str(BINARY), "--csv"], cwd=ROOT, check=True,
+    result = subprocess.run([str(BINARY), flag], cwd=ROOT, check=True,
                             capture_output=True, text=True)
-    rows = list(csv.DictReader(io.StringIO(result.stdout)))
+    return list(csv.DictReader(io.StringIO(result.stdout)))
+
+
+def load_rows():
+    """측정 프로그램을 돌려 CSV를 읽는다. 없으면 make가 만들게 한다."""
+    rows = run_csv("--csv")
     for row in rows:
         for key in ("n", "compares", "moves", "extraBytes", "maxDepth"):
             row[key] = int(row[key])
@@ -133,6 +138,30 @@ def main():
         {algo: [pick(reversed_rows, algo=algo)[0]["compares"],
                 pick(reversed_rows, algo=algo)[0]["moves"]] for algo in ALGOS},
         "횟수"))
+
+    # 5. 블록 크기 실험 — 이 값이 왜 상수인지를 보여 준다
+    blocks = run_csv("--blocks")
+    for row in blocks:
+        for key in ("n", "block", "compares", "moves"):
+            row[key] = int(row[key])
+        row["millis"] = float(row["millis"])
+    with open(OUT_DIR / "block-size.csv", "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(blocks[0]))
+        w.writeheader()
+        w.writerows(blocks)
+    xs = sorted({r["block"] for r in blocks if r["block"] <= 512})
+    series = {}
+    for n in sorted({r["n"] for r in blocks}):
+        series[f"n = {n:,}"] = [
+            next((r["compares"] for r in blocks if r["n"] == n and r["block"] == b), 0)
+            for b in xs
+        ]
+    made.append(svgchart.line_chart(
+        OUT_DIR / "block-size.svg",
+        "블록 크기를 바꿔 가며 — 비교 횟수",
+        "무작위 입력 · 로그-로그 · 최적 블록 크기는 n이 커져도 8~32에서 움직이지 않는다",
+        xs, series, "블록 크기 (원소 수)", "비교 횟수",
+        annotate_slope=False, vline=32, vline_label="지금 쓰는 값 32"))
 
     for path in made:
         print(f"wrote {Path(path).relative_to(ROOT)}")
