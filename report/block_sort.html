@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>블록 정렬 한 걸음씩 — 정렬 비교 과제</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfbf9;
+  --surface: #ffffff;
+  --ink: #24292f;
+  --muted: #6e7781;
+  --border: #dfe1e4;
+  --left: #0072B2;
+  --right: #E69F00;
+  --done: #009E73;
+  --rot: #8c4799;
+  --left-soft: #0072B21f;
+  --right-soft: #E69F001f;
+  --done-soft: #009E731f;
+  --rot-soft: #8c479914;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR",
+          "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a; --surface: #1c1f23; --ink: #e6e8ea; --muted: #9aa3ab;
+    --border: #2d3238;
+    --left: #4aa8e0; --right: #f0b445; --done: #35c79a; --rot: #bd85d8;
+    --left-soft: #4aa8e026; --right-soft: #f0b44526; --done-soft: #35c79a26;
+    --rot-soft: #bd85d81a;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--sans); font-size: 15px; line-height: 1.65;
+  padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px);
+}
+.wrap { max-width: 880px; margin: 0 auto; padding-block: 32px 64px; }
+h1 { font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -.01em; }
+h2 { font-size: 1.1rem; margin: 40px 0 10px; }
+h3 { font-size: .95rem; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+a { color: var(--left); }
+.lede { color: var(--muted); margin-bottom: 22px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px;
+}
+/* ---- 컨트롤 ---- */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+button, select {
+  font: inherit; font-size: .9rem; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 13px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: .4; cursor: default; }
+button.primary { background: var(--left); border-color: var(--left); color: #fff; font-weight: 600; }
+.spacer { flex: 1 1 auto; }
+.counter { font-family: var(--mono); font-size: .85rem; color: var(--muted); white-space: nowrap; }
+input[type=range] { width: 100%; accent-color: var(--left); margin: 4px 0 0; }
+/* ---- 단계 설명 ---- */
+.step-head { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+.badge {
+  font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+  border: 1px solid currentColor; white-space: nowrap;
+}
+.badge.p0 { color: var(--muted); }
+.badge.p1 { color: var(--left); background: var(--left-soft); }
+.badge.p2 { color: var(--right); background: var(--right-soft); }
+.badge.p3 { color: var(--done); background: var(--done-soft); }
+.step-title { font-weight: 700; }
+.note { min-height: 3.2em; margin: 0; }
+.note b { color: var(--left); }
+/* ---- 배열 ---- */
+.board-wrap { overflow-x: auto; margin: 18px 0 6px; padding-bottom: 4px; }
+.board { display: grid; gap: 4px 2px; min-width: calc(var(--n) * 20px); }
+.band {
+  grid-row: 1; font-size: .68rem; font-weight: 700; text-align: center;
+  border-radius: 6px 6px 0 0; padding: 2px 0; border: 1px solid; border-bottom: none;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.band.block { color: var(--muted); background: transparent; border-color: var(--border); }
+.band.left  { color: var(--left);  background: var(--left-soft);  border-color: var(--left); }
+.band.right { color: var(--right); background: var(--right-soft); border-color: var(--right); }
+.band.settled { color: var(--done); background: var(--done-soft); border-color: var(--done); }
+.band.aa { color: #fff; background: var(--left); border-color: var(--left); }
+.band.bb { color: #fff; background: var(--right); border-color: var(--right); }
+.rotband {
+  grid-row: 3; font-size: .68rem; font-weight: 700; text-align: center; color: var(--rot);
+  background: var(--rot-soft); border: 1px dashed var(--rot); border-radius: 0 0 6px 6px;
+  border-top: none; padding: 1px 0;
+}
+.cell {
+  grid-row: 2; display: flex; align-items: center; justify-content: center;
+  height: 34px; font-family: var(--mono); font-size: clamp(10px, 2.1vw, 15px);
+  font-weight: 600; background: var(--surface); color: var(--ink);
+  border: 1.5px solid var(--border); border-radius: 6px;
+  transition: background-color .18s, border-color .18s, transform .18s;
+}
+.cell.in-left  { border-color: var(--left);  background: var(--left-soft); }
+.cell.in-right { border-color: var(--right); background: var(--right-soft); }
+.cell.in-settled { border-color: var(--done); background: var(--done-soft); }
+.cell.in-aa { border-color: var(--left); background: var(--left-soft); border-width: 2.5px; }
+.cell.in-bb { border-color: var(--right); background: var(--right-soft); border-width: 2.5px; }
+.cell.pivot  { outline: 2.5px solid var(--rot); outline-offset: 1px; }
+.cell.target { border-style: dashed; border-width: 2px; border-color: var(--rot); }
+.cell.changed { animation: pop .38s ease-out; }
+@keyframes pop {
+  0% { transform: translateY(-5px) scale(1.1); background: var(--rot-soft); }
+  100% { transform: none; }
+}
+.idx { grid-row: 4; text-align: center; font-family: var(--mono); font-size: 8.5px; color: var(--muted); }
+/* ---- 범례 · 설명 ---- */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .76rem; color: var(--muted); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.chip { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid; display: inline-block; }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.grid3 .card p:last-child { margin-bottom: 0; }
+code, kbd {
+  font-family: var(--mono); font-size: .86em; background: var(--left-soft);
+  padding: 1px 5px; border-radius: 5px;
+}
+.rot-demo { font-family: var(--mono); font-size: .84rem; line-height: 2; color: var(--muted); }
+.rot-demo b { color: var(--ink); }
+.foot { font-size: .84rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; margin-top: 40px; }
+.warn { border-left: 3px solid var(--right); padding-left: 12px; margin: 14px 0; font-size: .88rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>블록 정렬, 한 걸음씩</h1>
+<p class="lede">
+  무작위 숫자가 정렬되는 과정을 한 단계씩 따라간다. 블록 크기까지
+  <a href="REPORT.md">보고서 2.3절</a>의 구현(<code>src/blockSort.c</code>)과 같은 값을 쓴다.
+</p>
+
+<div class="card">
+  <div class="controls">
+    <button id="shuffle">새 배열</button>
+    <label class="counter">원소 수
+      <select id="size">
+        <option value="40" selected>40</option>
+        <option value="48">48</option>
+        <option value="64">64</option>
+        <option value="96">96</option>
+      </select>
+    </label>
+    <span class="counter" id="blockinfo"></span>
+    <span class="spacer"></span>
+    <button id="skip" title="1단계를 건너뛰고 병합부터 본다">2단계로 ⏩</button>
+    <button id="first" title="처음으로">⏮</button>
+    <button id="prev" title="이전 단계">◀</button>
+    <button id="play" class="primary">▶ 재생</button>
+    <button id="next" title="다음 단계">▶</button>
+    <button id="last" title="끝으로">⏭</button>
+  </div>
+
+  <div class="step-head">
+    <span class="badge p0" id="phase">시작</span>
+    <span class="step-title" id="title">—</span>
+    <span class="spacer"></span>
+    <span class="counter" id="stepno">0 / 0</span>
+  </div>
+  <p class="note" id="note"></p>
+
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <input type="range" id="scrub" min="0" value="0" step="1">
+
+  <div class="legend">
+    <span><i class="chip" style="border-color:var(--left);background:var(--left-soft)"></i> 왼쪽 런 · 블록</span>
+    <span><i class="chip" style="border-color:var(--right);background:var(--right-soft)"></i> 오른쪽 런</span>
+    <span><i class="chip" style="border-color:var(--done);background:var(--done-soft)"></i> 정렬 끝난 구간</span>
+    <span><i class="chip" style="border-color:var(--rot);border-style:dashed"></i> 지금 회전할 구간</span>
+    <span class="counter" id="counters">비교 0 · 이동 0</span>
+  </div>
+</div>
+
+<h2>무슨 일이 벌어지고 있나</h2>
+<div class="grid3">
+  <div class="card">
+    <h3>1단계 — 블록마다 삽입 정렬</h3>
+    <p>병합을 하려면 <b>정렬된 조각</b>이 먼저 있어야 한다. 병합 정렬은 재귀로
+      쪼개 만들고, 블록 정렬은 작은 블록을 삽입 정렬해 만든다. 짧은 배열에서는
+      삽입 정렬이 제일 빠르기 때문이다.</p>
+    <p>그래서 <b>1단계는 준비 운동일 뿐이다.</b> 블록 정렬다운 일은 2단계에서 벌어진다.</p>
+  </div>
+  <div class="card">
+    <h3>2단계 — 이웃한 조각을 병합</h3>
+    <p>이웃한 두 조각을 하나로 합치고, 합친 폭을 두 배로 넓혀 다시 합친다.
+      폭이 배열 전체가 되면 끝이다.</p>
+    <p>병합 정렬과 같은 뼈대인데, <b>보조 배열을 쓰지 않는다</b>는 점이 다르다.</p>
+  </div>
+  <div class="card">
+    <h3>왜 뒤집기를 세 번 하나</h3>
+    <p>보조 배열이 있으면 한쪽을 복사해 두고 밀면 된다. 그것이 없으니
+      두 덩어리를 <b>제자리에서 통째로 맞바꿔야</b> 한다.</p>
+    <p class="rot-demo">
+      (A B C)(D E)<br>
+      ① 앞쪽 뒤집기 → (<b>C B A</b>)(D E)<br>
+      ② 뒷쪽 뒤집기 → (C B A)(<b>E D</b>)<br>
+      ③ 전체 뒤집기 → <b>(D E)(A B C)</b>
+    </p>
+    <p style="margin-bottom:0"><b>뒤집기는 두 번 하면 제자리다.</b> 둘을 각각
+      뒤집어 둔 뒤 전체를 한 번 더 뒤집으면, 각 덩어리는 두 번 뒤집혀 순서가
+      돌아오고 <b>덩어리끼리의 앞뒤만</b> 바뀐다. 중간 ①②가 엉망으로 보이는 것은
+      정상이다. ③까지 가야 뜻이 생긴다.</p>
+  </div>
+</div>
+
+<h2>제자리 병합이 도는 방법</h2>
+<div class="card">
+  <p>정렬된 두 런 <code>L</code>과 <code>R</code>을 보조 배열 없이 합쳐야 한다.
+    한 번에 다 하려 들지 않고, <b>원소 하나의 자리를 확정하고 문제를 둘로 쪼갠다.</b></p>
+  <ol>
+    <li><code>L</code>의 마지막이 <code>R</code>의 첫 원소 이하면 이어 붙이면 끝이다. 할 일 없음.</li>
+    <li>아니면 <b>짧지 않은 쪽의 한가운데</b> 원소를 고른다. 늘 긴 쪽을 반으로
+      자르므로 재귀 깊이가 <code>O(log n)</code>으로 묶인다.</li>
+    <li>반대쪽에서 그 원소가 들어갈 자리를 <b>이분 탐색</b>으로 찾는다.</li>
+    <li>사이 구간을 <b>회전</b>시킨다. 고른 원소의 자리가 확정된다.</li>
+    <li>왼쪽에 남은 짝과 오른쪽에 남은 짝을 같은 방법으로 다시 합친다.</li>
+  </ol>
+  <p><b>길이가 같으면 왼쪽을 고른다.</b> 조건이 <code>&gt;</code>가 아니라
+    <code>&gt;=</code>인 것이 중요하다. 같을 때 오른쪽으로 보내면, 두 런이 모두 길이
+    1인 경우 고를 자리가 <code>mid</code> 그 자체가 되어 <b>회전할 구간이 비고</b>,
+    같은 인자로 다시 불려 <b>무한 재귀</b>가 된다. 블록 둘을 병합할 때는 길이가 같은
+    쪽이 오히려 기본이라, 이 한 글자가 늘 일하고 있다.</p>
+  <p style="margin-bottom:0">한가운데를 어느 쪽에서 골랐느냐에 따라 이분 탐색의 종류가 갈린다.
+    왼쪽에서 골랐으면 <code>lowerBound</code>(그 값 <b>이상</b>이 처음 나오는 자리),
+    오른쪽에서 골랐으면 <code>upperBound</code>(그 값 <b>초과</b>가 처음 나오는 자리)다.
+    같은 값일 때 왼쪽 것이 앞에 남게 하려는 것이고, <b>이 선택 하나가 안정성을 지킨다.</b></p>
+</div>
+
+<div class="warn">
+  <b>왜 원소가 40개부터인가.</b> <code>src/blockSort.c</code>는 블록 크기를
+  <b>32 상수</b>로 쓴다(<code>blockSortBlockSize</code>). 그래서 원소가 32개 이하면
+  배열 전체가 블록 하나가 되어, <b>삽입 정렬 한 번으로 끝나고 병합이 아예 일어나지
+  않는다.</b> 블록 정렬이 블록 정렬답게 도는 것을 보려면 원소가 33개 이상이어야 한다.
+  기본값 40은 병합이 도는 것 중 가장 짧은 축이고, 96으로 올리면 <b>폭을 두 배로
+  넓히는 두 번째 병합</b>까지 돈다. 1단계는 <b>2단계로 ⏩</b>로 건너뛸 수 있다.
+  <br><br>
+  블록 크기가 <code>n</code>을 따라가지 않고 상수인 이유는 보고서의
+  <a href="REPORT.md#블록-크기는-얼마가-좋은가">블록 크기는 얼마가 좋은가</a>에서
+  재 보았다. 블록을 키우면 1단계 비용이 <code>O(n·B)</code>로 정비례해 늘고, 아껴지는
+  병합 비용은 <code>log</code> 수준으로만 준다. 그래서 최적값은 <code>n</code>과 무관한
+  작은 상수다.
+</div>
+
+<p class="foot">
+  정렬 비교 과제 · 이 데모는 <code>src/blockSort.c</code>와 같은 순서로 돌고,
+  비교·이동 횟수도 같은 방식으로 센다(교환 한 번 = 이동 세 번).
+  전체 보고서는 <a href="REPORT.md">REPORT.md</a>에 있다.
+</p>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ * 단계 기록기 — src/blockSort.c와 같은 순서로 돌면서 매 순간을 담아 둔다.
+ * ------------------------------------------------------------------ */
+function buildSteps(values, block) {
+  const a = values.slice();
+  const n = a.length;
+  const steps = [];
+  let compares = 0, moves = 0;
+
+  const push = (o) => steps.push({
+    a: a.slice(), phase: o.phase, title: o.title, note: o.note,
+    bands: o.bands || [], pivot: o.pivot ?? null, target: o.target ?? null,
+    rotate: o.rotate || null, compares, moves,
+  });
+
+  const blockBands = () => {
+    const out = [];
+    for (let lo = 0; lo < n; lo += block) {
+      out.push({ lo, hi: Math.min(lo + block, n), kind: "block",
+                 label: "블록 " + (Math.floor(lo / block) + 1) });
+    }
+    return out;
+  };
+
+  push({ phase: 0, title: "시작", bands: blockBands(),
+         note: `무작위 숫자 ${n}개다. 블록 크기는 <b>${block}</b> 상수라 ` +
+               `${Math.ceil(n / block)}조각으로 나뉜다. 마지막 조각은 남는 만큼만 ` +
+               "차지한다." });
+
+  /* --- 1단계: 블록마다 삽입 정렬 --- */
+  function insertionSortRange(lo, hi) {
+    for (let i = lo + 1; i < hi; i++) {
+      compares++;
+      if (a[i - 1] <= a[i]) {
+        push({ phase: 1, title: "이미 제자리", bands: blockBands(), pivot: i,
+               note: `<b>${a[i]}</b>은 왼쪽 이웃 ${a[i - 1]}보다 크거나 같다. 옮길 것이 없다.` });
+        continue;
+      }
+      const key = a[i];
+      moves++;
+      let j = i;
+      while (j > lo) {
+        compares++;
+        if (a[j - 1] > key) { a[j] = a[j - 1]; moves++; j--; } else { break; }
+      }
+      a[j] = key; moves++;
+      push({ phase: 1, title: "끼워 넣기", bands: blockBands(), pivot: j,
+             note: `<b>${key}</b>을 들어내고 그보다 큰 값들을 한 칸씩 뒤로 밀어, ` +
+                   `자리 ${j}에 넣었다.` });
+    }
+  }
+
+  for (let lo = 0; lo < n; lo += block) {
+    insertionSortRange(lo, Math.min(lo + block, n));
+  }
+  push({ phase: 1, title: "1단계 끝 — 여기까지는 그냥 삽입 정렬이다", bands: blockBands(),
+         note: "블록마다 정렬돼 <b>정렬된 조각</b>이 늘어섰다. 병합하려면 정렬된 " +
+               "조각이 있어야 하는데, 병합 정렬은 재귀로 쪼개 만들고 블록 정렬은 " +
+               "이렇게 삽입 정렬로 만든다. <b>블록 정렬의 진짜 일은 2단계다.</b>" });
+
+  /* --- 2단계: 제자리 병합 --- */
+  const reverse = (lo, hi) => {
+    while (lo + 1 < hi) {
+      const t = a[lo]; a[lo] = a[hi - 1]; a[hi - 1] = t;
+      moves += 3; lo++; hi--;
+    }
+  };
+
+  /* A = a[lo..mid), B = a[mid..hi). 이 둘의 자리를 맞바꾼다.
+     보조 배열이 없으니 뒤집기 세 번으로 한다. 뒤집기를 두 번 하면 제자리로
+     돌아오므로, 각자 뒤집어 둔 뒤 전체를 뒤집으면 순서는 복원되고 자리만 바뀐다. */
+  function rotate(lo, mid, hi) {
+    if (lo === mid || mid === hi) { return; }
+    const r = { lo, mid, hi };
+    const ab = [
+      { lo, hi: mid, kind: "aa", label: "A" },
+      { lo: mid, hi, kind: "bb", label: "B" },
+    ];
+    reverse(lo, mid);
+    push({ phase: 2, title: "회전 ① A를 뒤집는다", bands: ab, rotate: r,
+           note: "<b>A만</b> 거꾸로 됐다. 지금만 보면 망가뜨린 것 같지만, " +
+                 "<b>뒤집기는 두 번 하면 제자리로 돌아온다.</b> 그 성질을 쓰려는 것이다." });
+    reverse(mid, hi);
+    push({ phase: 2, title: "회전 ② B를 뒤집는다", bands: ab, rotate: r,
+           note: "이제 구간 전체가 <b>거꾸로 된 A + 거꾸로 된 B</b>다. " +
+                 "여기서 전체를 한 번 더 뒤집으면 어떻게 될까?" });
+    reverse(lo, hi);
+    const newMid = lo + (hi - mid);
+    push({ phase: 2, title: "회전 ③ 전체를 뒤집는다",
+           bands: [
+             { lo, hi: newMid, kind: "bb", label: "B (앞으로 왔다)" },
+             { lo: newMid, hi, kind: "aa", label: "A (뒤로 갔다)" },
+           ],
+           rotate: r,
+           note: "<b>A도 B도 두 번씩 뒤집혀 원래 순서로 돌아왔고, 둘의 앞뒤만 " +
+                 "바뀌었다.</b> 뒤집기 세 번으로 두 덩어리를 통째로 맞바꾼 것이다. " +
+                 "추가 메모리는 한 칸도 쓰지 않았다." });
+  }
+
+  const lowerBound = (lo, hi, key) => {
+    while (lo < hi) {
+      const m = lo + ((hi - lo) >> 1);
+      compares++;
+      if (a[m] < a[key]) { lo = m + 1; } else { hi = m; }
+    }
+    return lo;
+  };
+  const upperBound = (lo, hi, key) => {
+    while (lo < hi) {
+      const m = lo + ((hi - lo) >> 1);
+      compares++;
+      if (a[m] <= a[key]) { lo = m + 1; } else { hi = m; }
+    }
+    return lo;
+  };
+
+  function mergeInPlace(lo, mid, hi) {
+    if (lo >= mid || mid >= hi) { return; }
+    const runs = [
+      { lo, hi: mid, kind: "left", label: "왼쪽" },
+      { lo: mid, hi, kind: "right", label: "오른쪽" },
+    ];
+    compares++;
+    if (a[mid - 1] <= a[mid]) {
+      push({ phase: 2, title: "이미 이어진다", bands: runs, pivot: mid - 1, target: mid,
+             note: `왼쪽의 마지막 <b>${a[mid - 1]}</b>이 오른쪽의 첫 <b>${a[mid]}</b> 이하다. ` +
+                   "이어 붙이기만 하면 되므로 할 일이 없다." });
+      return;
+    }
+
+    /* 짧지 않은 쪽의 한가운데를 고른다. 길이가 같으면 왼쪽이다 — 조건이
+       '>' 가 아니라 '>=' 인 이유는 아래 설명에 적어 두었다. */
+    const lenL = mid - lo, lenR = hi - mid;
+    let i, j, why;
+    if (lenL >= lenR) {
+      i = lo + (lenL >> 1);
+      const x = a[i];
+      j = lowerBound(mid, hi, i);
+      const head = lenL === lenR
+        ? `두 런의 길이가 ${lenL}로 <b>같다</b>. 같을 때는 왼쪽을 고른다. `
+        : `왼쪽(${lenL})이 오른쪽(${lenR})보다 길다. `;
+      why = head +
+            `왼쪽 한가운데 <b>${x}</b>(자리 ${i})를 골라, 오른쪽에서 ${x} <b>이상</b>이 ` +
+            `처음 나오는 자리를 이분 탐색해 ${j}를 찾았다 (<code>lowerBound</code>).`;
+    } else {
+      j = mid + (lenR >> 1);
+      const y = a[j];
+      i = upperBound(lo, mid, j);
+      why = `오른쪽(${lenR})이 왼쪽(${lenL})보다 길다. ` +
+            `오른쪽 한가운데 <b>${y}</b>(자리 ${j})를 골라, 왼쪽에서 ${y} <b>초과</b>가 ` +
+            `처음 나오는 자리를 이분 탐색해 ${i}를 찾았다 (<code>upperBound</code>).`;
+    }
+    push({ phase: 2, title: "맞바꿀 두 덩어리", pivot: i, target: j,
+           rotate: { lo: i, mid, hi: j },
+           bands: [
+             { lo, hi: i, kind: "left", label: "그대로" },
+             { lo: i, hi: mid, kind: "aa", label: "A · 왼쪽 꼬리" },
+             { lo: mid, hi: j, kind: "bb", label: "B · 오른쪽 머리" },
+             { lo: j, hi, kind: "right", label: "그대로" },
+           ],
+           note: why + " <b>A의 원소는 모두 B보다 크다.</b> 그러니 B가 A보다 앞으로 " +
+                 "가야 한다. 보조 배열 없이 두 덩어리를 통째로 맞바꿔야 하는데, " +
+                 "그 방법이 <b>회전</b>이다." });
+
+    rotate(i, mid, j);
+    const newMid = i + (j - mid);
+    push({ phase: 2, title: "쪼개기", pivot: newMid,
+           bands: [
+             { lo, hi: newMid, kind: "left", label: "남은 왼쪽 짝" },
+             { lo: newMid, hi, kind: "right", label: "남은 오른쪽 짝" },
+           ],
+           note: "고른 원소가 제자리를 찾았다. 남은 일은 두 짝을 각각 합치는 것이고, " +
+                 "<b>같은 방법을 다시 쓴다.</b>" });
+    mergeInPlace(lo, i, newMid);
+    mergeInPlace(newMid, j, hi);
+  }
+
+  for (let width = block; width < n; width *= 2) {
+    for (let lo = 0; lo + width < n; lo += 2 * width) {
+      const mid = lo + width;
+      const hi = Math.min(lo + 2 * width, n);
+      push({ phase: 2, title: "병합 시작",
+             bands: [
+               { lo, hi: mid, kind: "left", label: "왼쪽" },
+               { lo: mid, hi, kind: "right", label: "오른쪽" },
+             ],
+             note: `정렬된 두 조각 <b>[${lo}, ${mid})</b> 과 <b>[${mid}, ${hi})</b> 를 ` +
+                   "보조 배열 없이 합친다." });
+      mergeInPlace(lo, mid, hi);
+      push({ phase: 2, title: "병합 끝",
+             bands: [{ lo, hi, kind: "settled", label: "합쳐진 한 덩어리" }],
+             note: `<b>[${lo}, ${hi})</b> 가 한 덩어리로 정렬됐다.` });
+    }
+  }
+
+  push({ phase: 3, title: "끝", bands: [{ lo: 0, hi: n, kind: "settled", label: "정렬 완료" }],
+         note: `배열 전체가 정렬됐다. 비교 <b>${compares}</b>회, 이동 <b>${moves}</b>회를 ` +
+               "썼고, <b>입력 배열 밖에 쓴 메모리는 원소 한 칸뿐이다.</b>" });
+  return steps;
+}
+
+/* ------------------------------------------------------------------ *
+ * 화면
+ * ------------------------------------------------------------------ */
+const PHASE_NAME = ["시작", "1단계 · 블록 정렬", "2단계 · 제자리 병합", "완료"];
+const BLOCK_SIZE = 32;         /* src/blockSort.c의 blockSortBlockSize와 같은 값 */
+const el = (id) => document.getElementById(id);
+const board = el("board"), scrub = el("scrub");
+
+let N = 40, steps = [], at = 0, timer = null, values = [];
+
+function randomValues(n) {
+  const out = [];
+  while (out.length < n) {
+    const v = 10 + Math.floor(Math.random() * 90);
+    if (!out.includes(v)) { out.push(v); }   /* 값이 겹치면 설명이 헷갈린다 */
+  }
+  return out;
+}
+
+function rebuild(fresh) {
+  N = Number(el("size").value);
+  if (fresh || values.length !== N) { values = randomValues(N); }
+  const block = BLOCK_SIZE;
+  el("blockinfo").textContent =
+    `블록 크기 ${block} (상수) · 조각 ${Math.ceil(N / block)}개`;
+  steps = buildSteps(values, block);
+  at = 0;
+  scrub.max = String(steps.length - 1);
+  render();
+}
+
+function render() {
+  const s = steps[at];
+  const prev = at > 0 ? steps[at - 1] : null;
+
+  el("phase").textContent = PHASE_NAME[s.phase];
+  el("phase").className = "badge p" + s.phase;
+  el("title").textContent = s.title;
+  el("note").innerHTML = s.note;
+  el("stepno").textContent = (at + 1) + " / " + steps.length;
+  el("counters").textContent = `비교 ${s.compares} · 이동 ${s.moves}`;
+  scrub.value = String(at);
+
+  board.style.gridTemplateColumns = `repeat(${N}, minmax(0, 1fr))`;
+  board.style.setProperty("--n", String(N));
+  board.textContent = "";
+
+  const kindOf = new Array(N).fill(null);
+  for (const b of s.bands) {
+    const div = document.createElement("div");
+    div.className = "band " + b.kind;
+    div.style.gridColumn = `${b.lo + 1} / ${b.hi + 1}`;
+    div.textContent = b.label;
+    board.appendChild(div);
+    for (let i = b.lo; i < b.hi; i++) { kindOf[i] = b.kind; }
+  }
+
+  for (let i = 0; i < N; i++) {
+    const c = document.createElement("div");
+    c.className = "cell" + (kindOf[i] ? " in-" + kindOf[i] : "");
+    if (i === s.pivot) { c.classList.add("pivot"); }
+    if (i === s.target) { c.classList.add("target"); }
+    if (prev && prev.a[i] !== s.a[i]) { c.classList.add("changed"); }
+    c.style.gridColumn = String(i + 1);
+    c.textContent = String(s.a[i]);
+    board.appendChild(c);
+
+    const idx = document.createElement("div");
+    idx.className = "idx";
+    idx.style.gridColumn = String(i + 1);
+    idx.textContent = String(i);
+    board.appendChild(idx);
+  }
+
+  if (s.rotate) {
+    const r = document.createElement("div");
+    r.className = "rotband";
+    r.style.gridColumn = `${s.rotate.lo + 1} / ${s.rotate.hi + 1}`;
+    r.textContent = "회전 구간";
+    board.appendChild(r);
+  }
+
+  el("prev").disabled = at === 0;
+  el("first").disabled = at === 0;
+  el("next").disabled = at === steps.length - 1;
+  el("last").disabled = at === steps.length - 1;
+}
+
+function go(to) {
+  at = Math.max(0, Math.min(steps.length - 1, to));
+  render();
+  if (at === steps.length - 1) { stop(); }
+}
+
+function stop() {
+  if (timer) { clearInterval(timer); timer = null; }
+  el("play").textContent = "▶ 재생";
+}
+
+function toggle() {
+  if (timer) { stop(); return; }
+  if (at === steps.length - 1) { at = 0; }
+  el("play").textContent = "❚❚ 정지";
+  timer = setInterval(() => go(at + 1), 550);
+}
+
+el("shuffle").addEventListener("click", () => { stop(); rebuild(true); });
+el("size").addEventListener("change", () => { stop(); rebuild(true); });
+el("skip").addEventListener("click", () => {
+  stop();
+  const i = steps.findIndex((s) => s.phase === 2);
+  go(i < 0 ? steps.length - 1 : i);   /* 병합이 없으면 끝으로 */
+});
+el("first").addEventListener("click", () => { stop(); go(0); });
+el("prev").addEventListener("click", () => { stop(); go(at - 1); });
+el("next").addEventListener("click", () => { stop(); go(at + 1); });
+el("last").addEventListener("click", () => { stop(); go(steps.length - 1); });
+el("play").addEventListener("click", toggle);
+scrub.addEventListener("input", () => { stop(); go(Number(scrub.value)); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") { stop(); go(at - 1); }
+  else if (e.key === "ArrowRight") { stop(); go(at + 1); }
+  else if (e.key === " ") { e.preventDefault(); toggle(); }
+});
+
+rebuild(true);
+</script>
+</body>
+</html>
